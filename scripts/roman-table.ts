@@ -40,6 +40,44 @@ const positionToUsKeyboardKeyMap = {
   "29": "/",
 } satisfies { [key in KeyPosition]: string };
 
+const dakuonPair = {
+  か: "が",
+  き: "ぎ",
+  く: "ぐ",
+  け: "げ",
+  こ: "ご",
+  さ: "ざ",
+  し: "じ",
+  す: "ず",
+  せ: "ぜ",
+  そ: "ぞ",
+  た: "だ",
+  ち: "ぢ",
+  つ: "づ",
+  て: "で",
+  と: "ど",
+  は: "ば",
+  ひ: "び",
+  ふ: "ぶ",
+  へ: "べ",
+  ほ: "ぼ",
+  ま: "ぱ",
+  み: "ぴ",
+  む: "ぷ",
+  め: "ぺ",
+  も: "ぽ",
+};
+
+/**
+ * かなを濁音化する
+ */
+function addDakuten(kana: string): string {
+  if (!(kana in dakuonPair)) {
+    throw new Error(`${kana}は濁音化できません`);
+  }
+  return dakuonPair[kana as keyof typeof dakuonPair];
+}
+
 /**
  * キー位置をUSキーボードのキーに変換する
  */
@@ -66,6 +104,31 @@ function exportRomanTable(layout: Layout): RomanTable {
       table.push({ input: key, output: info.oneStroke });
     } else {
       table.push({ input: key, nextInput: info.oneStroke });
+    }
+  }
+
+  // 濁点後置シフト
+  const dakuten = objectEntries(layout).find(([_, info]) => info.oneStroke === "゛");
+  if (!dakuten) throw new Error("濁点が見つかりません");
+  const dakutenKey = positionToUsKeyboardKey(dakuten[0]);
+  for (const [, info] of objectEntries(layout)) {
+    const dakuonKana = info.dakuonKanaInfo?.kana;
+    if (dakuonKana) {
+      table.push({ input: `${dakuonKana}${dakutenKey}`, output: addDakuten(dakuonKana) });
+    }
+  }
+
+  // ゃ後置シフト（拗音の場合はゃ後置、それ以外は濁音化）
+  const lya = objectEntries(layout).find(([_, info]) => info.oneStroke === "ゃ");
+  if (!lya) throw new Error("ゃが見つかりません");
+  const lyaKey = positionToUsKeyboardKey(lya[0]);
+  for (const [, info] of objectEntries(layout)) {
+    const dakuonKana = info.dakuonKanaInfo?.kana;
+    const youonKana = info.youonKanaInfo?.kana;
+    if (youonKana) {
+      table.push({ input: `${youonKana}${lyaKey}`, output: `${youonKana}ゃ` });
+    } else if (dakuonKana) {
+      table.push({ input: `${dakuonKana}${lyaKey}`, output: addDakuten(dakuonKana) });
     }
   }
 

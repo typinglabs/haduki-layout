@@ -160,6 +160,8 @@ export type OrderedInfos = {
   shift1?: Kana;
   shift2?: Kana;
   normalShift?: Kana;
+  dakuonKanaInfo?: NormalKana;
+  youonKanaInfo?: NormalKana;
 };
 
 /**

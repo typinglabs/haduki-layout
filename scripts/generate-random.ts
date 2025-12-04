@@ -133,7 +133,9 @@ function generateRandomLayout(): UnorderedLayout {
       // 拗音になるかなの位置には最大で1つしかおけない
       if (kanas.some((kana) => kana.type === "normal" && kana.isYouon)) return [position];
       // それ以外の場所は、空きスペースの分だけ配置できる
-      const positions: KeyPosition[] = new Array(4 - kanas.length).fill(position);
+      // TODO
+      // const positions: KeyPosition[] = new Array(4 - kanas.length).fill(position);
+      const positions: KeyPosition[] = new Array(3 - kanas.length).fill(position);
       return positions;
     })
     .flat();
@@ -153,17 +155,27 @@ function orderLayout(unorderedLayout: UnorderedLayout): Layout {
     if (kanas.length === 0) {
       throw new Error("キーにかなが割り当てられていません");
     }
+    const dakuonKana: NormalKana = kanas.find((kana) => kana.type === "normal" && kana.isDakuon) as NormalKana;
     if (kanas.length === 1) {
-      return [position, { oneStroke: kanas[0].kana }];
+      const youonKana: NormalKana = kanas.find((kana) => kana.type === "normal" && kana.isYouon) as NormalKana;
+      return [position, { oneStroke: kanas[0].kana, dakuonKanaInfo: dakuonKana, youonKanaInfo: youonKana }];
     } else {
       // 拗音になるかなが含まれている場合、強制的に通常シフトに割り当てる
-      const youonKana = kanas.find((kana) => kana.type === "normal" && kana.isYouon);
+      const youonKana: NormalKana = kanas.find((kana) => kana.type === "normal" && kana.isYouon) as NormalKana;
       if (youonKana) {
         const otherKana = kanas.find((kana) => kana.kana !== youonKana.kana);
         if (!otherKana) {
           throw new Error("otherKana is undefined");
         }
-        return [position, { oneStroke: otherKana.kana, normalShift: youonKana.kana }];
+        return [
+          position,
+          {
+            oneStroke: otherKana.kana,
+            normalShift: youonKana.kana,
+            dakuonKanaInfo: dakuonKana,
+            youonKanaInfo: youonKana,
+          },
+        ];
       } else {
         // 拗音になるかなが含まれていない場合、句読点を通常シフトに割り当ててから、残りのカナをランダムに割り当てる
         const kutoutenKana = kanas.find((kana) => kana.kana === "。" || kana.kana === "、");
@@ -178,6 +190,7 @@ function orderLayout(unorderedLayout: UnorderedLayout): Layout {
           shift1: shuffledOtherKanas[1]?.kana,
           shift2: shuffledOtherKanas[2]?.kana,
           normalShift: kutoutenKana?.kana,
+          dakuonKanaInfo: dakuonKana,
         };
 
         return [position, orderedInfos];
