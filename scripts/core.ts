@@ -59,12 +59,12 @@ type Kana = (typeof kanas)[number];
 
 type ShiftKeyKana = {
   type: "shiftKey";
-  kana: string;
+  kana: Kana;
 };
 
 export type NormalKana = {
   type: "normal";
-  kana: string;
+  kana: Kana;
   isDakuon: boolean;
   isYouon: boolean;
   isGairaion: boolean;
@@ -155,7 +155,16 @@ export type UnorderedLayout = {
   [key in KeyPosition]: KanaInfo[];
 };
 
+export type OrderedInfos = {
+  oneStroke: Kana;
+  shift1?: Kana;
+  shift2?: Kana;
+  normalShift?: Kana;
+};
+
 /**
  * シフトまで決めた完全な配列のレイアウト
  */
-export type Layout = undefined;
+export type Layout = {
+  [key in KeyPosition]: OrderedInfos;
+};
