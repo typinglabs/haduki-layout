@@ -1,4 +1,5 @@
 import { Kanas, KeyPosition, UnorderedLayout, NormalKana, keyPositions, Layout, OrderedInfos } from "./core";
+import { layoutToRomanTableString } from "./roman-table";
 import { objectEntries, objectFromEntries, objectKeys } from "./utils";
 
 const emptyLayout: UnorderedLayout = {
@@ -192,7 +193,7 @@ function main() {
   printLayout(unorderedLayout);
 
   const layout = orderLayout(unorderedLayout);
-  console.log(JSON.stringify(layout, null, 2));
+  console.log(layoutToRomanTableString(layout));
 }
 
 main();
