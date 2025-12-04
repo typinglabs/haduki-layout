@@ -132,6 +132,36 @@ function exportRomanTable(layout: Layout): RomanTable {
     }
   }
 
+  // ゅ後置シフト（shift1がある場合、または拗音が単打でない場合）
+  const lyu = objectEntries(layout).find(([_, info]) => info.oneStroke === "ゅ");
+  if (!lyu) throw new Error("ゅが見つかりません");
+  const lyuKey = positionToUsKeyboardKey(lyu[0]);
+  for (const [, info] of objectEntries(layout)) {
+    // 単打で打つかなに、ゅのキーをつける
+    const youonKana = info.youonKanaInfo?.kana;
+    if (info.shift1) {
+      table.push({ input: `${info.oneStroke}${lyuKey}`, output: info.shift1 });
+    } else if (youonKana && youonKana != info.oneStroke) {
+      table.push({ input: `${info.oneStroke}${lyuKey}`, output: `${youonKana}ゅ` });
+    }
+  }
+
+  // ょ後置シフト（shift2がある場合、または要音が単打でない場合）
+  const lyo = objectEntries(layout).find(([_, info]) => info.oneStroke === "ょ");
+  if (!lyo) throw new Error("ょが見つかりません");
+  const lyoKey = positionToUsKeyboardKey(lyo[0]);
+  for (const [, info] of objectEntries(layout)) {
+    // 単打で打つかなに、ょのキーをつける
+    const youonKana = info.youonKanaInfo?.kana;
+    if (info.shift2) {
+      table.push({ input: `${info.oneStroke}${lyoKey}`, output: info.shift2 });
+    } else if (youonKana && youonKana != info.oneStroke) {
+      table.push({ input: `${info.oneStroke}${lyoKey}`, output: `${youonKana}ょ` });
+    }
+  }
+
+  // 通常シフト
+
   return table;
 }
 

@@ -50,7 +50,7 @@ function getRandomSample<T>(array: T[], sampleSize: number): T[] {
 /**
  * 配列を表示する
  */
-function printLayout(layout: UnorderedLayout) {
+function printUnordered(layout: UnorderedLayout) {
   for (let i = 0; i < 4; i++) {
     let line = "";
     for (const j of keyPositions) {
@@ -60,6 +60,29 @@ function printLayout(layout: UnorderedLayout) {
         line += "　";
       }
       if (j % 10 === 9) {
+        console.log(line);
+        line = "";
+      }
+    }
+    console.log();
+  }
+}
+
+/**
+ * 配列を表示する
+ */
+function printLayout(layout: Layout) {
+  const props = ["oneStroke", "shift1", "shift2", "normalShift"] as const;
+  for (const prop of props) {
+    let line = "";
+    console.log(prop);
+    for (const i of keyPositions) {
+      if (layout[i][prop]) {
+        line += layout[i][prop];
+      } else {
+        line += "　";
+      }
+      if (i % 10 === 9) {
         console.log(line);
         line = "";
       }
@@ -203,10 +226,14 @@ function orderLayout(unorderedLayout: UnorderedLayout): Layout {
 
 function main() {
   const unorderedLayout = generateRandomLayout();
-  printLayout(unorderedLayout);
+  console.log("Unordered:");
+  printUnordered(unorderedLayout);
 
   const layout = orderLayout(unorderedLayout);
-  console.log(layoutToRomanTableString(layout));
+  console.log("Ordered:");
+  printLayout(layout);
+
+  // console.log(layoutToRomanTableString(layout));
 }
 
 main();
