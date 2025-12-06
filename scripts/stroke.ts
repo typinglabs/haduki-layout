@@ -172,6 +172,8 @@ const isYouonSuffix = (kana: string) => ["ゃ", "ゅ", "ょ"].includes(kana);
 
 const isGairaionSuffix = (kana: string) => ["ぁ", "ぃ", "ぅ", "ぇ", "ぉ"].includes(kana);
 
+const isDakuon = (kana: string): boolean => dakutenInverse[kana] !== undefined;
+
 /**
  * 打鍵単位を打つためのストロークを計算する
  */
@@ -182,27 +184,53 @@ export function strokesForKana(layout: Layout, kana: string): Keystroke[] {
 
   if (kana.length === 2) {
     if (isYouonSuffix(kana[1])) {
-      const youonKana = kana[0];
+      const isDakuYouon = isDakuon(kana[0]);
       const suffix = kana[1] as "ゃ" | "ゅ" | "ょ";
-      const slotInfo = findSlot(layout, youonKana);
-      assert.ok(slotInfo);
       const shiftPos = findShiftKeyPosition(layout, suffix);
 
-      return [keystroke(slotInfo.position, false), keystroke(shiftPos, false)];
+      if (isDakuYouon) {
+        return [...strokesForSingleKana(layout, kana[0]), keystroke(shiftPos, false)];
+      } else {
+        const slotInfo = findSlot(layout, kana[0]);
+        assert.ok(slotInfo);
+        return [keystroke(slotInfo.position, false), keystroke(shiftPos, false)];
+      }
     } else if (isGairaionSuffix(kana[1])) {
-      const gairaionInfo = findSlot(layout, kana[0]);
-      assert.ok(gairaionInfo);
+      const isDakuGairaion = isDakuon(kana[0]);
       const suffixInfo = findSlot(layout, kogakiInverse[kana[1]]);
       assert.ok(suffixInfo);
 
-      const needsShift = gairaionInfo.slot === "oneStroke" ? false : true;
-      return [
-        // 単打ではない場合は通常シフトで入力する
-        keystroke(gairaionInfo.position, needsShift),
-        keystroke(suffixInfo.position, true),
-      ];
+      if (isDakuGairaion) {
+        return [...strokesForSingleKana(layout, kana[0]), keystroke(suffixInfo.position, true)];
+      } else {
+        const baseInfo = findSlot(layout, kana[0]);
+        assert.ok(baseInfo);
+        const needsShift = baseInfo.slot !== "oneStroke";
+        return [keystroke(baseInfo.position, needsShift), keystroke(suffixInfo.position, true)];
+      }
     }
   }
 
   throw new Error(`${kana} を入力する方法が見つかりません`);
+}
+
+export function keystrokeCountForKana(layout: Layout, kana: string): number {
+  const strokes = strokesForKana(layout, kana);
+  let count = strokes.length;
+
+  // 連続シフトは1打鍵でカウントする
+  let prevShift = false;
+  for (let i = 0; i < strokes.length; i++) {
+    if (strokes[i].shiftKey && prevShift === false) {
+      count++;
+    }
+    prevShift = strokes[i].shiftKey;
+  }
+  return count;
+}
+
+export type KanaCount = { kana: string; count: number };
+
+export function totalKeystrokesForDataset(layout: Layout, dataset: KanaCount[]): number {
+  return dataset.reduce((sum, { kana, count }) => sum + keystrokeCountForKana(layout, kana) * count, 0);
 }
