@@ -1,4 +1,14 @@
-import { Kanas, KeyPosition, UnorderedLayout, NormalKana, keyPositions, Layout, OrderedInfos, KanaInfo } from "./core";
+import {
+  Kanas,
+  KeyPosition,
+  UnorderedLayout,
+  NormalKana,
+  keyPositions,
+  Layout,
+  OrderedInfos,
+  KanaInfo,
+  validateLayout,
+} from "./core";
 import { layoutToRomanTableString } from "./roman-table";
 import { objectEntries, objectFromEntries, objectKeys } from "./utils";
 

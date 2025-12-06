@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { Layout } from "./core";
+import { Layout, validateLayout } from "./core";
 import { exportRomanTable, layoutToRomanTableString } from "./roman-table";
 
 const exampleLayout: Layout = {
@@ -36,6 +36,10 @@ const exampleLayout: Layout = {
 };
 
 describe("romanTable", () => {
+  test("exampleLayoutが適切なこと", () => {
+    expect(() => validateLayout(exampleLayout)).not.toThrow();
+  });
+
   describe("単打", () => {
     test("単打のマッピングが作成されること", () => {
       const table = exportRomanTable(exampleLayout);
