@@ -58,6 +58,7 @@ const kanas = [
   "ぅ",
   "ぇ",
   "ぉ",
+  "ゎ",
 ] as const;
 
 type Kana = (typeof kanas)[number];

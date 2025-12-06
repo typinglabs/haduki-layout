@@ -79,6 +79,20 @@ const keyForPosition = (position: string) => {
   return key;
 };
 
+const toHiragana = (kana: string): string =>
+  Array.from(kana)
+    .map((c) => {
+      const code = c.charCodeAt(0);
+      // カタカナ(ァ〜ヴ)をひらがなに変換
+      if (code >= 0x30a1 && code <= 0x30f4) {
+        return String.fromCharCode(code - 0x60);
+      }
+      // 長音記号の全角ハイフンはそのまま
+      if (c === "ｰ") return "ー";
+      return c;
+    })
+    .join("");
+
 type Slot = keyof Pick<OrderedInfos, "oneStroke" | "shift1" | "shift2" | "normalShift">;
 
 /**
@@ -178,6 +192,9 @@ const isDakuon = (kana: string): boolean => dakutenInverse[kana] !== undefined;
  * 打鍵単位を打つためのストロークを計算する
  */
 export function strokesForKana(layout: Layout, kana: string): Keystroke[] {
+  const normalized = toHiragana(kana);
+  kana = normalized;
+
   if (kana.length === 1) {
     return strokesForSingleKana(layout, kana);
   }
