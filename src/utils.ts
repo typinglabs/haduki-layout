@@ -9,3 +9,10 @@ export const objectEntries = <T extends { [key: string]: unknown }>(obj: T): [ke
 export const objectFromEntries = <K extends string | number, V>(entries: [K, V][]): { [key in K]: V } => {
   return Object.fromEntries(entries) as { [key in K]: V };
 };
+
+/**
+ * [0, max)の整数を返す
+ */
+export function getRandomInt(max: number): number {
+  return Math.floor(Math.random() * max);
+}

@@ -130,5 +130,48 @@ describe("generateLayout", () => {
       }
       expect(found).toBe(true);
     });
+
+    test("句読点が通常シフトに配置されること", () => {
+      const layout = generateLayout(top26);
+
+      let count = 0;
+      for (const [, info] of objectEntries(layout)) {
+        if (info.normalShift === "、" || info.normalShift === "。") {
+          count++;
+        }
+      }
+      expect(count).toBe(2);
+    });
+  });
+
+  describe("STEP4", () => {
+    test("残りのかなが単打に配置されること", () => {
+      const layout = generateLayout(top26);
+
+      const kanaToCheck = ["な", "る", "も"];
+      let count = 0;
+      for (const [, info] of objectEntries(layout)) {
+        if (kanaToCheck.includes(info.oneStroke)) {
+          count++;
+        }
+      }
+      expect(count).toBe(3);
+    });
+
+    test("残りのかなが後置シフトに配置されること", () => {
+      const layout = generateLayout(top26);
+
+      const kanaToCheck = ["ぬ", "ね", "れ"];
+      let count = 0;
+      for (const [, info] of objectEntries(layout)) {
+        if (info.shift1 && kanaToCheck.includes(info.shift1)) {
+          count++;
+        }
+        if (info.shift2 && kanaToCheck.includes(info.shift2)) {
+          count++;
+        }
+      }
+      expect(count).toBe(3);
+    });
   });
 });
