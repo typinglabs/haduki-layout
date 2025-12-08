@@ -266,24 +266,31 @@ export function exportRomanTable(layout: Layout): RomanTable {
     const key = positionToUsKeyboardKey(position);
 
     if (info.normalShift) {
-      const kutoutenOrKogaki = ["、", "。", "ぁ", "ぃ", "ぅ", "ぇ", "ぉ"];
-      if (kutoutenOrKogaki.includes(info.normalShift)) {
-        // 句読点または小書きの場合は確定する
+      const kutouten = ["、", "。"];
+      if (kutouten.includes(info.normalShift)) {
+        // 句読点の場合は確定する
         table.push({ input: `${withShift(key)}`, output: info.normalShift });
       } else {
         table.push({ input: `${withShift(key)}`, nextInput: info.normalShift });
       }
     } else {
-      // シフトキーの場合は確定する
-      // シフトが定義されていない場合は、外来音で使うかながあれば外来音を出力する
-      // そうでなければ単打のかなを出力する
+      const smallMap: Record<string, string> = { あ: "ぁ", い: "ぃ", う: "ぅ", え: "ぇ", お: "ぉ" };
+      const baseVowel = [info.oneStroke, info.shift1, info.shift2, info.normalShift].find(
+        (kana) => kana && smallMap[kana]
+      ) as keyof typeof smallMap | undefined;
       const gairaionKana = findGairaionKana(info);
       const shiftKeys = ["ゃ", "ゅ", "ょ", "゛"];
       if (shiftKeys.includes(info.oneStroke)) {
+        // シフトキーの場合は確定する
         table.push({ input: `${withShift(key)}`, output: info.oneStroke });
+      } else if (baseVowel) {
+        // 母音があれば小書きを出力する
+        table.push({ input: `${withShift(key)}`, output: smallMap[baseVowel] });
       } else if (gairaionKana) {
+        // 外来音で使うかながあれば外来音を出力する
         table.push({ input: `${withShift(key)}`, nextInput: gairaionKana });
       } else {
+        // そうでなければ単打のかなを出力する
         table.push({ input: `${withShift(key)}`, nextInput: info.oneStroke });
       }
     }

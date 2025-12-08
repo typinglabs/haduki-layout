@@ -97,7 +97,7 @@ describe("validateLayout", () => {
     test("拗音になるかなの後置シフトにかながあるとエラーになる（拗音になるかなが単打の場合）", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "き", shift1: "あ" },
+        0: { oneStroke: "き", shift1: "な" },
       };
 
       expect(() => validateLayout(layout)).toThrow("拗音になるかなの後置シフトにはかなを配置できません");
@@ -106,7 +106,7 @@ describe("validateLayout", () => {
     test("拗音になるかなの後置シフトにかながあるとエラーになる（拗音になるかなが通常シフトの場合）", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "あ", normalShift: "き", shift1: "い" },
+        0: { oneStroke: "な", normalShift: "き", shift1: "い" },
       };
 
       expect(() => validateLayout(layout)).toThrow("拗音になるかなの後置シフトにはかなを配置できません");
@@ -124,7 +124,7 @@ describe("validateLayout", () => {
     test("拗音になるかなが単打でない場合は通常シフトに置く必要がある", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "あ", shift1: "き" },
+        0: { oneStroke: "な", shift1: "き" },
       };
 
       // NOTE: この条件は後置シフトに配置されていなければ自然に満たされる
@@ -134,7 +134,7 @@ describe("validateLayout", () => {
     test("拗音になるかなが通常シフトにあれば通る", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "あ", normalShift: "き" },
+        0: { oneStroke: "な", normalShift: "き" },
       };
 
       expect(() => validateLayout(layout)).not.toThrow();
@@ -192,7 +192,7 @@ describe("validateLayout", () => {
     test("ふへほ が単打ではない場合、ゅ後置シフトに定義されていないとエラーになる", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "あ", shift2: "ふ" },
+        0: { oneStroke: "な", shift2: "ふ" },
       };
 
       expect(() => validateLayout(layout)).toThrow("'ふ'は ゅ後置シフトに配置しなければいけません");
@@ -201,16 +201,16 @@ describe("validateLayout", () => {
     test("ふへほ に ょ後置シフトが定義されているとエラーになる", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "ふ", shift2: "あ" },
+        0: { oneStroke: "ふ", shift2: "な" },
       };
 
       expect(() => validateLayout(layout)).toThrow("'ふ'の ょ後置シフトにはかなを配置できません");
     });
 
-    test("ふへほ が単打で、ょ後置シフトが定義されていない通る", () => {
+    test("ふへほ が単打で、ょ後置シフトが定義されていないと通る", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "ふ", shift1: "あ" },
+        0: { oneStroke: "ふ", shift1: "な" },
       };
 
       expect(() => validateLayout(layout)).not.toThrow();
@@ -219,10 +219,39 @@ describe("validateLayout", () => {
     test("ふへほ が ゅ後置シフトで、ょ後置シフトが定義されていない通る", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "あ", shift1: "ふ" },
+        0: { oneStroke: "な", shift1: "ふ" },
       };
 
       expect(() => validateLayout(layout)).not.toThrow();
+    });
+  });
+
+  describe("外来音に関するルール", () => {
+    test("外来音になるかなが同じキーに複数あるとエラーになる", () => {
+      const layout: Layout = {
+        ...baseLayout,
+        0: { oneStroke: "あ", shift1: "ふ" },
+      };
+
+      expect(() => validateLayout(layout)).toThrow("外来音になるかなは1キーに1つまでです");
+    });
+
+    test("外来音になるかなが同じキーに1つしかなければ通る", () => {
+      const layout: Layout = {
+        ...baseLayout,
+        0: { oneStroke: "あ", shift1: "な" },
+      };
+
+      expect(() => validateLayout(layout)).not.toThrowError();
+    });
+
+    test("外来音になるかながある場所の、通常シフトに定義されているとエラーになる", () => {
+      const layout: Layout = {
+        ...baseLayout,
+        0: { oneStroke: "あ", normalShift: "な" },
+      };
+
+      expect(() => validateLayout(layout)).toThrowError("外来音になるかなの通常シフトにはかなを配置できません");
     });
   });
 });

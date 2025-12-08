@@ -58,9 +58,10 @@ const kanas = [
   "ぅ",
   "ぇ",
   "ぉ",
+  "ゎ",
 ] as const;
 
-type Kana = (typeof kanas)[number];
+export type Kana = (typeof kanas)[number];
 
 type ShiftKeyKana = {
   type: "shiftKey";
@@ -140,25 +141,6 @@ export const keyPositions = [
 
 export type KeyPosition = (typeof keyPositions)[number];
 
-/**
- * 各かなの位置のみを決めたレイアウト（シフトは未定）
- *
- * 以下のの条件を満たす必要がある。
- * 条件1. 拗音になるカナの排他的配置
- *  拗音になるイ段のかな（き、し、ち、に、ひ、み、り）を、各位置に1つまで配置する。
- * 条件2. 濁音になるカナの排他的配置
- *  濁音になるかな（か、き、く、け、こ、さ、し、...）を、各位置に1つまで配置する。
- *  またこれらのカナはシフトキーがある位置には配置しないことにする。ローマ字テーブルが複雑になるため。
- * 条件3. 通常シフトを使うカナの排他的配置
- *  通常シフトは句読点、あ行小書き、外来音で使用するが単打ではないカナ（ふ、て、う、と、し、ち）を1打で打つために使用する。
- *  そのため、あいうえおふてうとしちつ は各位置に1つまで配置する。
- * 条件4. 拗音になるカナの後置シフトには何も配置しない
- *  し、き、ち、ひ、み、りの後置シフトに配置すると拗音が打てなくなるため、何も配置しない。
- */
-export type UnorderedLayout = {
-  [key in KeyPosition]: KanaInfo[];
-};
-
 export type OrderedInfos = {
   oneStroke: Kana;
   shift1?: Kana;
@@ -193,6 +175,11 @@ export function validateLayout(layout: Layout): ValidatedLayout {
     if (!kana) return false;
     const info = Kanas[kana as keyof typeof Kanas];
     return info?.type === "normal" && info.isDakuon;
+  };
+  const isGairaionKana = (kana: string | undefined) => {
+    if (!kana) return false;
+    const info = Kanas[kana as keyof typeof Kanas];
+    return info?.type === "normal" && info.isGairaion;
   };
 
   for (const [, info] of Object.entries(layout)) {
@@ -253,6 +240,18 @@ export function validateLayout(layout: Layout): ValidatedLayout {
       }
       if (info.shift2) {
         throw new Error(`'${hahifuKana}'の ょ後置シフトにはかなを配置できません`);
+      }
+    }
+
+    // 外来音に関するルール
+    const gairaionKanas = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter(isGairaionKana);
+    if (gairaionKanas.length > 1) {
+      // 外来音になるかながが排他的に配置されていること
+      throw new Error("外来音になるかなは1キーに1つまでです");
+    } else if (gairaionKanas.length === 1) {
+      // 外来音になるかなの通常シフトには何も配置されていないこと（外来音になるかなが通常シフトにある場合を除く）
+      if (info.normalShift && !isGairaionKana(info.normalShift)) {
+        throw new Error(`外来音になるかなの通常シフトにはかなを配置できません ${JSON.stringify(info)}`);
       }
     }
   }
