@@ -1,4 +1,4 @@
-import { Layout } from "./core";
+import { Kanas, Layout } from "./core";
 
 export const exampleLayout: Layout = {
   0: { oneStroke: "ま" },
@@ -32,3 +32,32 @@ export const exampleLayout: Layout = {
   28: { oneStroke: "り" },
   29: { oneStroke: "ー" },
 };
+
+export const top26Kanas: (keyof typeof Kanas)[] = [
+  "い",
+  "う",
+  "ん",
+  "か",
+  "の",
+  "と",
+  "し",
+  "た",
+  "て",
+  "く",
+  "な",
+  "に",
+  "は",
+  "こ",
+  "る",
+  "っ",
+  "す",
+  "き",
+  "ま",
+  "も",
+  "つ",
+  "お",
+  "ら",
+  "を",
+  "さ",
+  "あ",
+];

@@ -68,6 +68,33 @@ function getRandomSample<T>(array: T[], sampleSize: number): T[] {
   return shuffled.slice(0, sampleSize);
 }
 
+class RandomAccessArray<T> {
+  private items: T[];
+  constructor(values: T[]) {
+    this.items = values.slice();
+  }
+  getRandomIndex(): number {
+    if (this.items.length === 0) throw new Error("RandomAccessArray is empty");
+    return Math.floor(Math.random() * this.items.length);
+  }
+  remove(index: number): T {
+    if (index < 0 || index >= this.items.length) throw new Error("index out of bounds");
+    const last = this.items.length - 1;
+    [this.items[index], this.items[last]] = [this.items[last], this.items[index]];
+    const value = this.items.pop() as T;
+    return value;
+  }
+  empty(): boolean {
+    return this.items.length === 0;
+  }
+  size(): number {
+    return this.items.length;
+  }
+  values(): T[] {
+    return this.items.slice();
+  }
+}
+
 function shuffle<T>(array: readonly T[]): T[] {
   const arr = array.slice();
   for (let i = arr.length - 1; i > 0; i--) {
@@ -207,6 +234,22 @@ export function generateLayout(top26s: (keyof typeof Kanas)[]): Layout {
       // そうでない場合は、ゅ後置シフトまたはょ後置シフトに配置する
       placeShift1OrShift2(layout, kana as Kana);
     }
+  }
+
+  // STEP3. 通常シフトに関係する母音と句読点配置する
+  // 母音を配置できる場所は、シフトと拗音がある場所以外
+  // 句読点を配置できる場所は、ゃ゛シフトと単打ではない拗音がある場所以外
+  const vowels = ["あ", "い", "え", "お"] as const;
+  for (const vowel of vowels) {
+    if (top26s.includes(vowel)) {
+      // 単打の空いているところで、拗音と外来音に関するカナ（ふてうとしちつ）が配置されていない場所に配置する
+    } else {
+      // シフト1または2の空いているところで、拗音と外来音に関するカナが配置されていない場所に配置する
+    }
+  }
+  const kutoutens = ["、", "。"] as const;
+  for (const kutouten of kutoutens) {
+    // ゃ"シフトと単打ではない拗音がある場所以外に配置する
   }
 
   return layout;

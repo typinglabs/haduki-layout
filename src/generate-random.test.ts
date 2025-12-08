@@ -104,4 +104,31 @@ describe("generateLayout", () => {
       expect(count).toBe(3);
     });
   });
+
+  describe("STEP3", () => {
+    test("あいおが単打に配置されること", () => {
+      const layout = generateLayout(top26);
+
+      const kanaToCheck = ["あ", "い", "お"];
+      let count = 0;
+      for (const [, info] of objectEntries(layout)) {
+        if (kanaToCheck.includes(info.oneStroke)) {
+          count++;
+        }
+      }
+      expect(count).toBe(3);
+    });
+
+    test("えが後置シフトに配置されること", () => {
+      const layout = generateLayout(top26);
+
+      let found = false;
+      for (const [, info] of objectEntries(layout)) {
+        if (info.shift1 === "え" || info.shift2 === "え") {
+          found = true;
+        }
+      }
+      expect(found).toBe(true);
+    });
+  });
 });

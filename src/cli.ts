@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
-import { exampleLayout } from "./layout-fixtures";
+import { exampleLayout, top26Kanas } from "./layout-fixtures";
 import { keystrokeCountForKana, strokesForKana, KanaCount } from "./stroke";
-import { generateRandomLayout, orderLayout, printLayout } from "./generate-random";
+import { generateLayout, printLayout } from "./generate-random";
 import { layoutToRomanTableString } from "./roman-table";
 
 function runKeystrokes(datasetPath: string) {
@@ -46,10 +46,10 @@ function runKeystrokes(datasetPath: string) {
 }
 
 function runGenerateRandom() {
-  const unorderedLayout = generateRandomLayout();
-  const layout = orderLayout(unorderedLayout);
+  const layout = generateLayout(top26Kanas);
   printLayout(layout);
-  console.log(layoutToRomanTableString(layout));
+
+  // console.log(layoutToRomanTableString(layout));
 }
 
 function main() {
