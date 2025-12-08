@@ -1,16 +1,5 @@
 import assert from "node:assert/strict";
-import {
-  Kanas,
-  KeyPosition,
-  UnorderedLayout,
-  keyPositions,
-  Layout,
-  OrderedInfos,
-  Kana,
-  KanaInfo,
-  NormalKana,
-  validateLayout,
-} from "./core";
+import { Kanas, KeyPosition, keyPositions, Layout, OrderedInfos, Kana, NormalKana, validateLayout } from "./core";
 import { getRandomInt, objectEntries, objectFromEntries } from "./utils";
 
 const shiftKeyKanas = [Kanas.ゃ, Kanas.ゅ, Kanas.ょ, Kanas.゛];
@@ -202,7 +191,8 @@ export function generateLayout(top26s: (keyof typeof Kanas)[]): Layout {
   // STEP4. 残りのかなを配置する
   // 後置シフトに置く場合は色々条件があるので注意する
   const restKanas = objectEntries(Kanas).filter(
-    ([, info]) => info.type === "normal" && !info.isDakuon && !info.isYouon && !info.isGairaion
+    ([kana, info]) =>
+      info.type === "normal" && !info.isDakuon && !info.isYouon && !info.isGairaion && kana !== "、" && kana !== "。"
   );
   for (const [kana] of restKanas) {
     if (top26s.includes(kana)) {

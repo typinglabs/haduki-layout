@@ -1,8 +1,7 @@
 import { readFileSync } from "node:fs";
-import { exampleLayout, top26Kanas } from "./layout-fixtures";
+import { top26Kanas } from "./layout-fixtures";
 import { keystrokeCountForKana, strokesForKana, KanaCount } from "./stroke";
 import { generateLayout, printLayout } from "./generate-random";
-import { layoutToRomanTableString } from "./roman-table";
 
 function runKeystrokes(datasetPath: string) {
   const lines = readFileSync(datasetPath, "utf-8").trim().split("\n");
@@ -10,6 +9,9 @@ function runKeystrokes(datasetPath: string) {
     .map((line) => line.split("\t"))
     .filter((cols) => cols.length >= 2)
     .map(([kana, count]) => ({ kana, count: Number(count) }));
+
+  const exampleLayout = generateLayout(top26Kanas);
+  printLayout(exampleLayout);
 
   let totalWithShiftCount = 0;
   let totalWithoutShiftCount = 0;
