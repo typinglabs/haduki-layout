@@ -103,10 +103,41 @@ export function getStrokeTime(strokes: Keystroke[]): number {
     return finger;
   };
 
-  return strokes.reduce((total, stroke) => {
-    const finger = getFinger(stroke.key);
+  let lastHand: Hand | null = null;
+  /** ある指を最後に使ったときを記録する */
+  let lastFinger: Record<Finger, { index: number } | undefined> = {
+    1: undefined,
+    2: undefined,
+    3: undefined,
+    4: undefined,
+    7: undefined,
+    8: undefined,
+    9: undefined,
+    0: undefined,
+  };
 
+  return strokes.reduce((total, stroke, index) => {
+    const finger = getFinger(stroke.key);
+    const hand = fingerToHand(finger);
+
+    // 打鍵時間
     let time = parameters.push[finger];
+
+    // 手の交代
+    if (lastHand !== null && lastHand !== hand) {
+      time += parameters.alt;
+    }
+    lastHand = hand;
+
+    // 同指連続のペナルティ
+    if (lastFinger[finger] !== undefined) {
+      const diff = index - lastFinger[finger].index;
+      if (diff <= 2) {
+        const k = diff === 1 ? 1 : 0.3;
+        time += k * parameters.pena[finger];
+      }
+    }
+    lastFinger[finger] = { index };
 
     return total + time;
   }, 0);

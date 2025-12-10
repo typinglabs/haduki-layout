@@ -38,4 +38,53 @@ describe("getStrokeTime", () => {
       expect(getStrokeTime([{ key: ";", shiftKey: false }])).toBe(parameters.push[0]);
     });
   });
+
+  describe("手の交代", () => {
+    test("左手から右手に交代するとaltが加算されること", () => {
+      const strokes: Keystroke[] = [
+        { key: "a", shiftKey: false },
+        { key: "l", shiftKey: false },
+      ];
+      expect(getStrokeTime(strokes)).toBe(parameters.push[1] + parameters.alt + parameters.push[9]);
+    });
+
+    test("右手から左手に交代するとaltが加算されること", () => {
+      const strokes: Keystroke[] = [
+        { key: "k", shiftKey: false },
+        { key: "s", shiftKey: false },
+      ];
+      expect(getStrokeTime(strokes)).toBe(parameters.push[8] + parameters.alt + parameters.push[2]);
+    });
+  });
+
+  describe("同指連続のペナルティ", () => {
+    test("同じ指を連続で使うとpenaが加算されること 左手人差し指", () => {
+      const strokes: Keystroke[] = [
+        { key: "f", shiftKey: false },
+        { key: "f", shiftKey: false },
+      ];
+      expect(getStrokeTime(strokes)).toBe(parameters.push[4] * 2 + parameters.pena[4]);
+    });
+
+    test("同じ指を連続で使うとpenaが加算されること 右手人差し指", () => {
+      const strokes: Keystroke[] = [
+        { key: "j", shiftKey: false },
+        { key: "j", shiftKey: false },
+      ];
+      expect(getStrokeTime(strokes)).toBe(parameters.push[7] * 2 + parameters.pena[7]);
+    });
+
+    test("1つ打鍵を開けて同じ指を連続で使うと、pena*0.3が加算されること", () => {
+      const strokes: Keystroke[] = [
+        { key: "f", shiftKey: false },
+        { key: "j", shiftKey: false },
+        { key: "f", shiftKey: false },
+      ];
+      const expectedTime =
+        parameters.push[4] +
+        (parameters.push[7] + parameters.alt) +
+        (parameters.push[4] + parameters.alt + parameters.pena[4] * 0.3);
+      expect(getStrokeTime(strokes)).toBe(expectedTime);
+    });
+  });
 });
