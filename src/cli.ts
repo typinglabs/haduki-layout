@@ -1,7 +1,9 @@
 import { readFileSync } from "node:fs";
-import { top26Kanas } from "./layout-fixtures";
-import { keystrokeCountForKana, strokesForKana, KanaCount } from "./stroke";
+import { exampleLayout, top26Kanas } from "./layout-fixtures";
+import { keystrokeCountForKana, strokesForKana, KanaCount, textToStrokes, keystrokesToString } from "./stroke";
 import { generateLayout, printLayout } from "./generate-random";
+import { getStrokeTime } from "./stroke-time";
+import { layoutToRomanTableString } from "./roman-table";
 
 function runKeystrokes(datasetPath: string) {
   const lines = readFileSync(datasetPath, "utf-8").trim().split("\n");
@@ -50,11 +52,49 @@ function runKeystrokes(datasetPath: string) {
 function runGenerateRandom() {
   const layout = generateLayout(top26Kanas);
   printLayout(layout);
-
-  // console.log(layoutToRomanTableString(layout));
 }
 
-function main() {
+async function runStrokeTime() {
+  const text = await readStdin();
+  const normalizedText = text.replace(/\s+/g, "");
+  const strokes = textToStrokes(exampleLayout, normalizedText);
+  const totalMs = getStrokeTime(strokes);
+  const strokeString = keystrokesToString(strokes);
+  const kanaCount = normalizedText.length;
+  const efficiency = kanaCount === 0 ? 0 : strokes.length / kanaCount;
+  const kpm = totalMs === 0 ? 0 : (strokes.length * 60000) / totalMs;
+
+  console.log(
+    JSON.stringify(
+      {
+        totalMs,
+        strokes: strokes.length,
+        kanaCount,
+        efficiency,
+        kpm,
+        strokeString,
+      },
+      null,
+      2
+    )
+  );
+}
+
+function readStdin(): Promise<string> {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    process.stdin.setEncoding("utf-8");
+    process.stdin.on("data", (chunk) => (data += chunk));
+    process.stdin.on("end", () => resolve(data));
+    process.stdin.on("error", reject);
+  });
+}
+
+function generateRomanTable() {
+  console.log(layoutToRomanTableString(exampleLayout));
+}
+
+async function main() {
   const [, , command, ...args] = process.argv;
   switch (command) {
     case "keystrokes": {
@@ -67,17 +107,23 @@ function main() {
       runGenerateRandom();
       break;
     }
+    case "stroke-time": {
+      await runStrokeTime();
+      break;
+    }
+    case "roman-table": {
+      generateRomanTable();
+      break;
+    }
     default:
       console.log("Usage:");
       console.log("  bun scripts/cli.ts keystrokes [--dataset=path]");
+      console.log("  bun scripts/cli.ts stroke-time < text");
       break;
   }
 }
 
-main();
-
-// やりたいこと
-// 配列とテキストを与えて、それを打鍵するのに必要な時間を見積もる
-// 実装する必要があるもの
-// ひらがなのテキストを、ストロークに変換する関数
-// ストロークを時間に変換する関数←実装済み
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});

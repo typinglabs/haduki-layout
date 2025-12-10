@@ -1,5 +1,12 @@
 import { describe, expect, test } from "bun:test";
-import { strokesForKana, Keystroke, keystrokeCountForKana, totalKeystrokesForDataset } from "./stroke";
+import {
+  strokesForKana,
+  Keystroke,
+  keystrokeCountForKana,
+  totalKeystrokesForDataset,
+  textToStrokes,
+  keystrokesToString,
+} from "./stroke";
 import { exampleLayout } from "./layout-fixtures";
 
 const expectStrokes = (actual: Keystroke[], expected: Keystroke[]) => {
@@ -199,5 +206,30 @@ describe("totalKeystrokesForDataset", () => {
 
     // き(1打)*10 + きゃ(2打)*5 + が(2打)*3 = 10 + 10 + 6 = 26
     expect(totalKeystrokesForDataset(exampleLayout, dataset)).toBe(26);
+  });
+});
+
+describe("textToStrokes", () => {
+  test("1文字の列をストロークに変換できること", () => {
+    const strokes = textToStrokes(exampleLayout, "きのこ");
+    expect(strokes).toEqual([
+      { key: "p", shiftKey: false },
+      { key: "n", shiftKey: false },
+      { key: "o", shiftKey: false },
+    ]);
+  });
+
+  test("拗音を2文字として解釈すること", () => {
+    const strokes = textToStrokes(exampleLayout, "きゃく");
+    expect(strokes).toEqual([
+      { key: "p", shiftKey: false },
+      { key: "s", shiftKey: false },
+      { key: "h", shiftKey: false },
+    ]);
+  });
+
+  test("shift付きのストロークは大文字に変換されること", () => {
+    const strokes = textToStrokes(exampleLayout, "ぁ");
+    expect(keystrokesToString(strokes)).toBe("A");
   });
 });

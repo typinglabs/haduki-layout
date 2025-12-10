@@ -232,13 +232,13 @@ export function exportRomanTable(layout: Layout): RomanTable {
     const youonKana = findYouonKana(info);
     if (info.shift1) {
       table.push({ input: `${info.oneStroke}${lyuKey}`, output: info.shift1 });
-      table.push({ input: `${info.oneStroke}${withShift(lyuKey)}`, output: info.shift1 });
+      // table.push({ input: `${info.oneStroke}${withShift(lyuKey)}`, output: info.shift1 });
     } else if (youonKana && youonKana != info.oneStroke) {
       table.push({ input: `${info.oneStroke}${lyuKey}`, output: `${youonKana}ゅ` });
-      table.push({ input: `${info.oneStroke}${withShift(lyuKey)}`, output: `${youonKana}ゅ` });
+      // table.push({ input: `${info.oneStroke}${withShift(lyuKey)}`, output: `${youonKana}ゅ` });
     } else if (info.oneStroke === "は") {
       table.push({ input: `${info.oneStroke}${lyuKey}`, output: "ぴ" });
-      table.push({ input: `${info.oneStroke}${withShift(lyuKey)}`, output: "ぴ" });
+      // table.push({ input: `${info.oneStroke}${withShift(lyuKey)}`, output: "ぴ" });
     }
   }
 
@@ -251,13 +251,13 @@ export function exportRomanTable(layout: Layout): RomanTable {
     const hagyouKana = findHagyouKanaExceptHi(info);
     if (info.shift2) {
       table.push({ input: `${info.oneStroke}${lyoKey}`, output: info.shift2 });
-      table.push({ input: `${info.oneStroke}${withShift(lyoKey)}`, output: info.shift2 });
+      // table.push({ input: `${info.oneStroke}${withShift(lyoKey)}`, output: info.shift2 });
     } else if (youonKana && youonKana != info.oneStroke) {
       table.push({ input: `${info.oneStroke}${lyoKey}`, output: `${youonKana}ょ` });
-      table.push({ input: `${info.oneStroke}${withShift(lyoKey)}`, output: `${youonKana}ょ` });
+      // table.push({ input: `${info.oneStroke}${withShift(lyoKey)}`, output: `${youonKana}ょ` });
     } else if (hagyouKana) {
       table.push({ input: `${info.oneStroke}${lyoKey}`, output: addHandakuten(hagyouKana) });
-      table.push({ input: `${info.oneStroke}${withShift(lyoKey)}`, output: addHandakuten(hagyouKana) });
+      // table.push({ input: `${info.oneStroke}${withShift(lyoKey)}`, output: addHandakuten(hagyouKana) });
     }
   }
 

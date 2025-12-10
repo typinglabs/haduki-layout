@@ -36,6 +36,39 @@ const positionToUsKeyboardKeyMap: Record<string, string> = {
   "29": "/",
 };
 
+const shiftedKeyMap: Record<string, string> = {
+  q: "Q",
+  w: "W",
+  e: "E",
+  r: "R",
+  t: "T",
+  y: "Y",
+  u: "U",
+  i: "I",
+  o: "O",
+  p: "P",
+  a: "A",
+  s: "S",
+  d: "D",
+  f: "F",
+  g: "G",
+  h: "H",
+  j: "J",
+  k: "K",
+  l: "L",
+  ";": ":",
+  z: "Z",
+  x: "X",
+  c: "C",
+  v: "V",
+  b: "B",
+  n: "N",
+  m: "M",
+  ",": "<",
+  ".": ">",
+  "/": "?",
+};
+
 const dakutenInverse: Record<string, string> = {
   が: "か",
   ぎ: "き",
@@ -258,4 +291,51 @@ export type KanaCount = { kana: string; count: number };
 
 export function totalKeystrokesForDataset(layout: Layout, dataset: KanaCount[]): number {
   return dataset.reduce((sum, { kana, count }) => sum + keystrokeCountForKana(layout, kana) * count, 0);
+}
+
+/**
+ * ひらがなテキストをストローク列に変換する
+ *
+ * 2文字組（拗音・外来音など）は優先的に解釈し、失敗した場合は1文字ずつ解釈する。
+ * 未対応の文字はスキップし、警告を出力する。
+ */
+export function textToStrokes(layout: Layout, text: string): Keystroke[] {
+  const strokes: Keystroke[] = [];
+  const normalized = text.replace(/\s+/g, "");
+
+  for (let i = 0; i < normalized.length; i++) {
+    const twoChars = normalized.slice(i, i + 2);
+    if (twoChars.length === 2) {
+      try {
+        strokes.push(...strokesForKana(layout, twoChars));
+        i += 1;
+        continue;
+      } catch {
+        // 1文字解釈にフォールバック
+      }
+    }
+
+    const oneChar = normalized[i];
+    try {
+      strokes.push(...strokesForKana(layout, oneChar));
+    } catch {
+      console.warn(`未対応の文字をスキップ: ${oneChar}`);
+    }
+  }
+
+  return strokes;
+}
+
+/**
+ * ストローク列を文字列化する（shift付きはシフト面の記号に変換）
+ */
+export function keystrokesToString(strokes: Keystroke[]): string {
+  return strokes
+    .map(({ key, shiftKey }) => {
+      if (!shiftKey) return key;
+      const shifted = shiftedKeyMap[key];
+      if (!shifted) throw new Error(`シフトに対応していないキーです: ${key}`);
+      return shifted;
+    })
+    .join("");
 }
