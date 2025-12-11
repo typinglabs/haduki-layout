@@ -208,6 +208,9 @@ export function validateLayout(layout: Layout): ValidatedLayout {
         throw new Error("拗音になるかなの後置シフトにはかなを配置できません");
       }
     }
+    if (info.normalShift && !["、", "。"].includes(info.normalShift) && !isYouonKana(info.normalShift)) {
+      throw new Error("拗音になるかなと句読点以外は通常シフトに配置できません");
+    }
 
     // 濁音に関するルール:
     const dakuonKanas = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter(isDakuonKana);

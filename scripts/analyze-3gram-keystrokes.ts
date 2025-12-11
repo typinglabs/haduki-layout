@@ -28,9 +28,6 @@ for (const entry of entries) {
       continue;
     }
     const len = strokes.length;
-    if (len === 2) {
-      console.error(entry.text);
-    }
     const bucket = buckets.get(len) ?? { occurrences: 0, entries: 0 };
     bucket.occurrences += entry.count;
     bucket.entries += 1;

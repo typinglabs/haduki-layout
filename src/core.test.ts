@@ -139,6 +139,15 @@ describe("validateLayout", () => {
 
       expect(() => validateLayout(layout)).not.toThrow();
     });
+
+    test("拗音になるかなと句読点以外が通常シフトにあればエラーになる", () => {
+      const layout: Layout = {
+        ...baseLayout,
+        0: { oneStroke: "な", normalShift: "を" },
+      };
+
+      expect(() => validateLayout(layout)).toThrow("拗音になるかなと句読点以外は通常シフトに配置できません");
+    });
   });
 
   describe("濁音に関するルール", () => {
@@ -248,7 +257,7 @@ describe("validateLayout", () => {
     test("外来音になるかながある場所の、通常シフトに定義されているとエラーになる", () => {
       const layout: Layout = {
         ...baseLayout,
-        0: { oneStroke: "あ", normalShift: "な" },
+        0: { oneStroke: "あ", normalShift: "り" },
       };
 
       expect(() => validateLayout(layout)).toThrowError("外来音になるかなの通常シフトにはかなを配置できません");

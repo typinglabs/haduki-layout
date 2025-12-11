@@ -4,6 +4,7 @@ import { keystrokeCountForKana, strokesForKana, KanaCount, textToStrokes, keystr
 import { generateLayout, printLayout } from "./generate-random";
 import { getStrokeTime, getStrokeTypeByTrigram } from "./stroke-time";
 import { layoutToRomanTableString } from "./roman-table";
+import { searchLayout } from "./layout-search";
 
 function runKeystrokes(datasetPath: string) {
   const lines = readFileSync(datasetPath, "utf-8").trim().split("\n");
@@ -96,6 +97,11 @@ function generateRomanTable() {
   console.log(layoutToRomanTableString(exampleLayout));
 }
 
+function runSearchLayout() {
+  const layout = searchLayout();
+  printLayout(layout);
+}
+
 async function main() {
   const [, , command, ...args] = process.argv;
   switch (command) {
@@ -115,6 +121,10 @@ async function main() {
     }
     case "roman-table": {
       generateRomanTable();
+      break;
+    }
+    case "search": {
+      runSearchLayout();
       break;
     }
     default:
