@@ -53,12 +53,12 @@ const kanas = [
   "゛",
   "。",
   "、",
-  "ぁ",
-  "ぃ",
-  "ぅ",
-  "ぇ",
-  "ぉ",
-  "ゎ",
+  // "ぁ",
+  // "ぃ",
+  // "ぅ",
+  // "ぇ",
+  // "ぉ",
+  // "ゎ",
 ] as const;
 
 export type Kana = (typeof kanas)[number];
@@ -141,7 +141,14 @@ export const keyPositions = [
 
 export type KeyPosition = (typeof keyPositions)[number];
 
-export type OrderedInfos = {
+export const keySlots = ["oneStroke", "shift1", "shift2", "normalShift"] as const;
+
+export type KeySlot = (typeof keySlots)[number];
+
+/**
+ * 1つのキーへのかなの割り当て
+ */
+export type KeyAssignment = {
   oneStroke: Kana;
   shift1?: Kana;
   shift2?: Kana;
@@ -149,23 +156,28 @@ export type OrderedInfos = {
 };
 
 /**
- * シフトまで決めた完全な配列のレイアウト
+ * 配列のレイアウト
  */
 export type Layout = {
-  [key in KeyPosition]: OrderedInfos;
+  [key in KeyPosition]: KeyAssignment;
 };
 
 /**
  * ルールを満たしているレイアウト
  */
 export type ValidatedLayout = {
-  [key in KeyPosition]: OrderedInfos;
+  [key in KeyPosition]: KeyAssignment;
 };
 
 /**
- * 配列が条件を満たしていることを確認する
+ * 配列のバリデーションのエラー
  */
-export function validateLayout(layout: Layout): ValidatedLayout {
+export class LayoutValidationError extends Error {}
+
+/**
+ * かな割り当てが条件を満たしていることを確認する
+ */
+export function validateKeyAssignment(ka: KeyAssignment) {
   const isYouonKana = (kana: string | undefined) => {
     if (!kana) return false;
     const info = Kanas[kana as keyof typeof Kanas];
@@ -182,82 +194,88 @@ export function validateLayout(layout: Layout): ValidatedLayout {
     return info?.type === "normal" && info.isGairaion;
   };
 
-  for (const [, info] of Object.entries(layout)) {
-    // シフトキーに関するルール:
-    const kanaInfo = Kanas[info.oneStroke as keyof typeof Kanas];
-    if (kanaInfo?.type === "shiftKey") {
-      // シフトキーの後置シフトには何も配置されていないこと
-      if (info.shift1 || info.shift2) {
-        throw new Error("シフトキーの後置にはかなを配置できません");
-      }
-      // 濁点シフトキー（ゃ、゛）の通常シフトには何も配置されていないこと
-      if ((info.oneStroke === "ゃ" || info.oneStroke === "゛") && info.normalShift) {
-        throw new Error(`濁点シフトキー（${info.oneStroke}）の通常シフトにはかなを配置できません`);
-      }
+  // シフトキーに関するルール:
+  const kanaInfo = Kanas[ka.oneStroke as keyof typeof Kanas];
+  if (kanaInfo?.type === "shiftKey") {
+    // シフトキーの後置シフトには何も配置されていないこと
+    if (ka.shift1 || ka.shift2) {
+      throw new LayoutValidationError("シフトキーの後置にはかなを配置できません");
     }
-
-    // 拗音に関するルール:
-    const youonKanas = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter(isYouonKana);
-    if (youonKanas.length > 1) {
-      // 拗音になるかなが排他的に配置されていること
-      throw new Error("拗音になるかなは1キーに1つまでです");
-    }
-    if (youonKanas.length === 1) {
-      // 拗音になるかなの後置シフトには何も配置されていないこと
-      if (info.shift1 || info.shift2) {
-        throw new Error("拗音になるかなの後置シフトにはかなを配置できません");
-      }
-    }
-    if (info.normalShift && !["、", "。"].includes(info.normalShift) && !isYouonKana(info.normalShift)) {
-      throw new Error("拗音になるかなと句読点以外は通常シフトに配置できません");
-    }
-
-    // 濁音に関するルール:
-    const dakuonKanas = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter(isDakuonKana);
-    if (dakuonKanas.length > 1) {
-      // 濁音になるかなが排他的に配置されていること
-      throw new Error("濁音になるかなは1キーに1つまでです");
-    }
-
-    // 半濁音に関するルール:
-    const haKana = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter((kana) => kana === "は");
-    if (haKana.length > 0) {
-      if (info.oneStroke !== haKana[0]) {
-        // は は単打に配置されていること
-        throw new Error("'は'は単打に配置する必要があります");
-      }
-      if (info.shift1 || info.shift2) {
-        // は の後置には何も配置されていないこと
-        throw new Error("'は'の後置にはかなを配置できません");
-      }
-    }
-
-    const hahifuKanas = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter(
-      (kana) => kana !== undefined && ["ふ", "へ", "ほ"].includes(kana)
-    );
-    if (hahifuKanas.length > 0) {
-      const hahifuKana = hahifuKanas[0];
-      if (info.oneStroke !== hahifuKana && info.shift1 !== hahifuKana) {
-        // ふ、へ、ほが単打でない場合は、ゅ後置シフトに配置されていること
-        throw new Error(`'${hahifuKana}'は ゅ後置シフトに配置しなければいけません`);
-      }
-      if (info.shift2) {
-        throw new Error(`'${hahifuKana}'の ょ後置シフトにはかなを配置できません`);
-      }
-    }
-
-    // 外来音に関するルール
-    const gairaionKanas = [info.oneStroke, info.shift1, info.shift2, info.normalShift].filter(isGairaionKana);
-    if (gairaionKanas.length > 1) {
-      // 外来音になるかながが排他的に配置されていること
-      throw new Error("外来音になるかなは1キーに1つまでです");
-    } else if (gairaionKanas.length === 1) {
-      // 外来音になるかなの通常シフトには何も配置されていないこと（外来音になるかなが通常シフトにある場合を除く）
-      if (info.normalShift && !isGairaionKana(info.normalShift)) {
-        throw new Error(`外来音になるかなの通常シフトにはかなを配置できません ${JSON.stringify(info)}`);
-      }
+    // 濁点シフトキー（ゃ、゛）の通常シフトには何も配置されていないこと
+    if ((ka.oneStroke === "ゃ" || ka.oneStroke === "゛") && ka.normalShift) {
+      throw new LayoutValidationError(`濁点シフトキー（${ka.oneStroke}）の通常シフトにはかなを配置できません`);
     }
   }
 
+  // 拗音に関するルール:
+  const youonKanas = [ka.oneStroke, ka.shift1, ka.shift2, ka.normalShift].filter(isYouonKana);
+  if (youonKanas.length > 1) {
+    // 拗音になるかなが排他的に配置されていること
+    throw new LayoutValidationError("拗音になるかなは1キーに1つまでです");
+  }
+  if (youonKanas.length === 1) {
+    // 拗音になるかなの後置シフトには何も配置されていないこと
+    if (ka.shift1 || ka.shift2) {
+      throw new LayoutValidationError("拗音になるかなの後置シフトにはかなを配置できません");
+    }
+  }
+  if (ka.normalShift && !["、", "。"].includes(ka.normalShift) && !isYouonKana(ka.normalShift)) {
+    throw new LayoutValidationError("拗音になるかなと句読点以外は通常シフトに配置できません");
+  }
+
+  // 濁音に関するルール:
+  const dakuonKanas = [ka.oneStroke, ka.shift1, ka.shift2, ka.normalShift].filter(isDakuonKana);
+  if (dakuonKanas.length > 1) {
+    // 濁音になるかなが排他的に配置されていること
+    throw new LayoutValidationError("濁音になるかなは1キーに1つまでです");
+  }
+
+  // 半濁音に関するルール:
+  const haKana = [ka.oneStroke, ka.shift1, ka.shift2, ka.normalShift].filter((kana) => kana === "は");
+  if (haKana.length > 0) {
+    if (ka.oneStroke !== haKana[0]) {
+      // は は単打に配置されていること
+      throw new LayoutValidationError("'は'は単打に配置する必要があります");
+    }
+    if (ka.shift1 || ka.shift2) {
+      // は の後置には何も配置されていないこと
+      throw new LayoutValidationError("'は'の後置にはかなを配置できません");
+    }
+  }
+
+  const hahifuKanas = [ka.oneStroke, ka.shift1, ka.shift2, ka.normalShift].filter(
+    (kana) => kana !== undefined && ["ふ", "へ", "ほ"].includes(kana)
+  );
+  if (hahifuKanas.length > 0) {
+    const hahifuKana = hahifuKanas[0];
+    if (ka.oneStroke !== hahifuKana && ka.shift1 !== hahifuKana) {
+      // ふ、へ、ほが単打でない場合は、ゅ後置シフトに配置されていること
+      throw new LayoutValidationError(`'${hahifuKana}'は ゅ後置シフトに配置しなければいけません`);
+    }
+    if (ka.shift2) {
+      throw new LayoutValidationError(`'${hahifuKana}'の ょ後置シフトにはかなを配置できません`);
+    }
+  }
+
+  // 外来音に関するルール
+  const gairaionKanas = [ka.oneStroke, ka.shift1, ka.shift2, ka.normalShift].filter(isGairaionKana);
+  if (gairaionKanas.length > 1) {
+    // 外来音になるかながが排他的に配置されていること
+    throw new LayoutValidationError("外来音になるかなは1キーに1つまでです");
+  } else if (gairaionKanas.length === 1) {
+    // 外来音になるかなの通常シフトには何も配置されていないこと（外来音になるかなが通常シフトにある場合を除く）
+    if (ka.normalShift && !isGairaionKana(ka.normalShift)) {
+      throw new LayoutValidationError(`外来音になるかなの通常シフトにはかなを配置できません ${JSON.stringify(ka)}`);
+    }
+  }
+}
+
+/**
+ * 配列が条件を満たしていることを確認する
+ */
+export function validateLayout(layout: Layout): ValidatedLayout {
+  for (const [, assignment] of Object.entries(layout)) {
+    validateKeyAssignment(assignment);
+  }
   return layout;
 }

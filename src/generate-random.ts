@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { Kanas, KeyPosition, keyPositions, Layout, OrderedInfos, Kana, NormalKana, validateLayout } from "./core";
+import { Kanas, KeyPosition, keyPositions, Layout, KeyAssignment, Kana, NormalKana, validateLayout } from "./core";
 import { getRandomInt, objectEntries, objectFromEntries } from "./utils";
 
 const shiftKeyKanas = [Kanas.ゃ, Kanas.ゅ, Kanas.ょ, Kanas.゛];
@@ -10,7 +10,7 @@ function createEmptyLayout(): Layout {
       [
         pos,
         { oneStroke: undefined as unknown as Kana, shift1: undefined, shift2: undefined, normalShift: undefined },
-      ] as [KeyPosition, OrderedInfos]
+      ] as [KeyPosition, KeyAssignment]
   );
   return objectFromEntries(entries);
 }

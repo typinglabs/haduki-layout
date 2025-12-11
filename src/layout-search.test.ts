@@ -5,7 +5,6 @@ import { join } from "node:path";
 import {
   createLayoutWithShiftKeys,
   getPlacementCandidates,
-  getPlacementCandidatesWithSlots,
   loadKanaByFrequency,
   loadTrigramDataset,
   searchLayout,
@@ -54,29 +53,10 @@ describe("createLayoutWithShiftKeys", () => {
   });
 });
 
-describe("getPlacementCandidates", () => {
-  test("shiftキーが配置された場所は候補に含まれないこと", () => {
-    const layout = createLayoutWithShiftKeys();
-    const candidates = getPlacementCandidates(layout, "あ");
-    const positions = candidates.map((c) => c.position);
-    expect(positions).not.toContain(11);
-    expect(positions).not.toContain(12);
-    expect(positions).not.toContain(17);
-    expect(positions).not.toContain(18);
-  });
-
-  test("既に配置済みの場所は候補に含まれないこと", () => {
-    const layout = createLayoutWithShiftKeys();
-    layout[20].oneStroke = "か";
-    const positions = getPlacementCandidates(layout, "あ").map((c) => c.position);
-    expect(positions).not.toContain(20);
-  });
-});
-
 describe("getPlacementCandidatesWithSlots", () => {
   test("shiftキーが置かれているキーは全スロット除外されること", () => {
     const layout = createLayoutWithShiftKeys();
-    const candidates = getPlacementCandidatesWithSlots(layout, "あ");
+    const candidates = getPlacementCandidates(layout, "あ");
     const positions = candidates.map((c) => c.position);
     expect(positions).not.toContain(11);
     expect(positions).not.toContain(12);
@@ -87,27 +67,27 @@ describe("getPlacementCandidatesWithSlots", () => {
   test("拗音/濁音になるかなは拗音/濁音配置済みキーを除外すること", () => {
     const layout = createLayoutWithShiftKeys();
     layout[5].oneStroke = "き"; // 拗音になる
-    const positions = getPlacementCandidatesWithSlots(layout, "し").map((c) => c.position);
+    const positions = getPlacementCandidates(layout, "し").map((c) => c.position);
     expect(positions).not.toContain(5);
   });
 
   test("外来音は拗音/外来音配置済みキーを除外すること", () => {
     const layout = createLayoutWithShiftKeys();
     layout[6].normalShift = "あ"; // 外来音に使われる母音
-    const positions = getPlacementCandidatesWithSlots(layout, "て").map((c) => c.position);
+    const positions = getPlacementCandidates(layout, "て").map((c) => c.position);
     expect(positions).not.toContain(6);
   });
 
   test("ふ/へ/ほが置かれているキーのshift2は除外されること", () => {
     const layout = createLayoutWithShiftKeys();
     layout[7].oneStroke = "ふ";
-    const slots = getPlacementCandidatesWithSlots(layout, "あ").filter((c) => c.position === 7);
+    const slots = getPlacementCandidates(layout, "あ").filter((c) => c.position === 7);
     expect(slots.some((c) => c.slot === "shift2")).toBe(false);
   });
 
   test("は はoneStrokeのみ候補になること", () => {
     const layout = createLayoutWithShiftKeys();
-    const slots = getPlacementCandidatesWithSlots(layout, "は");
+    const slots = getPlacementCandidates(layout, "は");
     expect(slots.every((c) => c.slot === "oneStroke")).toBe(true);
   });
 });

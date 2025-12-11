@@ -1,5 +1,17 @@
 import { readFileSync } from "node:fs";
-import { Kana, Kanas, KeyPosition, keyPositions, Layout, OrderedInfos, validateLayout } from "./core";
+import {
+  Kana,
+  Kanas,
+  KeyPosition,
+  keyPositions,
+  Layout,
+  KeyAssignment,
+  validateLayout,
+  keySlots,
+  validateKeyAssignment,
+  LayoutValidationError,
+  KeySlot,
+} from "./core";
 import { objectFromEntries } from "./utils";
 
 export type TrigramEntry = { trigram: string; count: number };
@@ -52,7 +64,7 @@ function createEmptyLayout(): Layout {
       [
         pos,
         { oneStroke: undefined as unknown as Kana, shift1: undefined, shift2: undefined, normalShift: undefined },
-      ] as [KeyPosition, OrderedInfos]
+      ] as [KeyPosition, KeyAssignment]
   );
   return objectFromEntries(entries);
 }
@@ -76,138 +88,41 @@ export function createLayoutWithShiftKeys(): Layout {
   return layout;
 }
 
-export type PlacementCandidate = { slot: "oneStroke"; position: KeyPosition };
+export type PlacementCandidate = {
+  slot: KeySlot;
+  position: KeyPosition;
+};
+
+function canAssignKana(layout: Layout, position: KeyPosition, slot: KeySlot, kana: Kana): boolean {
+  if (layout[position][slot]) return false;
+
+  const newAssignment: KeyAssignment = { ...layout[position], [slot]: kana };
+  try {
+    validateKeyAssignment(newAssignment);
+    return true;
+  } catch (e) {
+    if (e instanceof LayoutValidationError) {
+      return false;
+    }
+    throw e;
+  }
+}
 
 /**
- * 現在のレイアウトに、指定したかなを配置できる候補（単打スロットのみ）を返す
- * - 既に何か配置済みのキーは除外
- * - シフトキーが置かれている場所は除外
+ * あるかなを配置できる場所を取得する
  */
 export function getPlacementCandidates(layout: Layout, kana: Kana): PlacementCandidate[] {
   const kanaInfo = Kanas[kana as keyof typeof Kanas];
   if (!kanaInfo || kanaInfo.type !== "normal") return [];
 
-  return keyPositions
-    .filter((pos) => {
-      const info = layout[pos];
-      const isShiftKey = Kanas[info.oneStroke as keyof typeof Kanas]?.type === "shiftKey";
-      return !isShiftKey && info.oneStroke === undefined;
-    })
-    .map((pos) => ({ slot: "oneStroke", position: pos }));
-}
-
-type PlaceInfo = {
-  isShiftKey: boolean;
-  youonPlaced: boolean;
-  dakuonPlaced: boolean;
-  gairaionPlaced: boolean;
-};
-
-function buildPlaceInfo(layout: Layout): Record<KeyPosition, PlaceInfo> {
-  const placeInfo: Record<KeyPosition, PlaceInfo> = objectFromEntries(
-    keyPositions.map((pos) => [
-      pos,
-      { isShiftKey: false, youonPlaced: false, dakuonPlaced: false, gairaionPlaced: false },
-    ])
-  );
-
-  for (const pos of keyPositions) {
-    const info = layout[pos];
-    const slots: (keyof OrderedInfos)[] = ["oneStroke", "shift1", "shift2", "normalShift"];
-    for (const slot of slots) {
-      const kana = info[slot];
-      if (!kana) continue;
-      const kanaInfo = Kanas[kana as keyof typeof Kanas];
-      if (!kanaInfo) continue;
-      if (slot === "oneStroke" && kanaInfo.type === "shiftKey") {
-        placeInfo[pos].isShiftKey = true;
-        continue;
-      }
-      if (kanaInfo.type === "normal") {
-        if (kanaInfo.isYouon) placeInfo[pos].youonPlaced = true;
-        if (kanaInfo.isDakuon) placeInfo[pos].dakuonPlaced = true;
-        if (kanaInfo.isGairaion) placeInfo[pos].gairaionPlaced = true;
-      }
-    }
-  }
-
-  return placeInfo;
-}
-
-export type PlacementCandidateWithSlot = {
-  slot: keyof Pick<OrderedInfos, "oneStroke" | "shift1" | "shift2" | "normalShift">;
-  position: KeyPosition;
-};
-
-const huheho: Kana[] = ["ふ", "へ", "ほ"];
-
-/**
- * shift1 / shift2 / oneStroke / normalShift への配置候補を返す
- * 生成ルールと同等の制約をチェックする:
- * - 既に埋まっているスロット、シフトキーが置かれているキーは除外
- * - 濁音/拗音になるかなは、同種のかなが配置済みのキーでは除外
- * - 外来音になるかなは、拗音または外来音が配置済みのキーでは除外
- * - ふ/へ/ほ が配置されているキーの shift2 は使用不可
- * - 「は」は oneStroke のみ配置可
- */
-export function getPlacementCandidatesWithSlots(layout: Layout, kana: Kana): PlacementCandidateWithSlot[] {
-  const kanaInfo = Kanas[kana as keyof typeof Kanas];
-  if (!kanaInfo || kanaInfo.type !== "normal") return [];
-
-  const placeInfo = buildPlaceInfo(layout);
-  const slots: PlacementCandidateWithSlot["slot"][] = ["oneStroke", "shift1", "shift2", "normalShift"];
-
-  const candidates: PlacementCandidateWithSlot[] = [];
-
+  const candidates: PlacementCandidate[] = [];
   for (const position of keyPositions) {
-    const info = layout[position];
-    const pInfo = placeInfo[position];
-
-    if (pInfo.isShiftKey) continue;
-
-    for (const slot of slots) {
-      // 「は」は単打のみ
-      if (kana === "は" && slot !== "oneStroke") continue;
-      // ふへほ自身も shift2 に置かない
-      if (huheho.includes(kana) && slot === "shift2") continue;
-
-      if (info[slot] !== undefined) continue;
-
-      // shift2 は、ふ/へ/ほ が置かれているキーでは使えない
-      if (slot === "shift2" && (huheho.includes(info.oneStroke as Kana) || huheho.includes(info.shift1 as Kana))) {
-        continue;
+    for (const slot of keySlots) {
+      if (canAssignKana(layout, position, slot, kana)) {
+        candidates.push({ slot, position });
       }
-
-      // 濁音/拗音は同種が配置済みのキーでは不可
-      if ((kanaInfo.isDakuon || kanaInfo.isYouon) && (pInfo.youonPlaced || pInfo.dakuonPlaced)) continue;
-
-      // 外来音は拗音/外来音が配置済みのキーでは不可
-      if (kanaInfo.isGairaion && (pInfo.youonPlaced || pInfo.gairaionPlaced)) continue;
-
-      // 外来音が既に配置されているキーのnormalShiftには、外来音以外を置けない
-      if (slot === "normalShift" && pInfo.gairaionPlaced && !kanaInfo.isGairaion) continue;
-      // 通常シフトに置けるのは拗音になるかな、または句読点のみ
-      if (
-        slot === "normalShift" &&
-        !(kanaInfo.isYouon || kana === "、" || kana === "。")
-      ) {
-        continue;
-      }
-
-      // 拗音が配置されているキーでは、shift1/shift2 を使えない
-      if (pInfo.youonPlaced && (slot === "shift1" || slot === "shift2")) continue;
-      // 拗音を置くときは、そのキーのshift1/shift2が空である必要がある
-      if (kanaInfo.isYouon && (info.shift1 !== undefined || info.shift2 !== undefined)) continue;
-      // 拗音はshift1/shift2には置かない
-      if (kanaInfo.isYouon && (slot === "shift1" || slot === "shift2")) continue;
-
-      // 'は' が既に単打で置かれているキーの後置には置かない
-      if (info.oneStroke === "は" && (slot === "shift1" || slot === "shift2")) continue;
-
-      candidates.push({ slot, position });
     }
   }
-
   return candidates;
 }
 
@@ -227,7 +142,7 @@ export function searchLayout(): Layout {
   const isTop26 = (kana: string) => top26.includes(kana);
 
   for (const kana of kanaOrder) {
-    const candidates = getPlacementCandidatesWithSlots(layout, kana as Kana).filter((c) =>
+    const candidates = getPlacementCandidates(layout, kana as Kana).filter((c) =>
       isTop26(kana) ? c.slot === "oneStroke" : true
     );
 

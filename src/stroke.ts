@@ -1,4 +1,4 @@
-import { Kanas, Layout, OrderedInfos } from "./core";
+import { Kanas, Layout, KeyAssignment } from "./core";
 import assert from "node:assert/strict";
 
 export type Keystroke = { key: string; shiftKey: boolean };
@@ -126,7 +126,7 @@ const toHiragana = (kana: string): string =>
     })
     .join("");
 
-type Slot = keyof Pick<OrderedInfos, "oneStroke" | "shift1" | "shift2" | "normalShift">;
+type Slot = keyof Pick<KeyAssignment, "oneStroke" | "shift1" | "shift2" | "normalShift">;
 
 /**
  * かながどのキー位置のスロット（単打/ゅシフト/ょシフト/通常シフト）に配置されているかを検索する
