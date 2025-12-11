@@ -13,6 +13,8 @@ import {
   KeySlot,
 } from "./core";
 import { objectFromEntries } from "./utils";
+import { StrokeConversionError, textToStrokes } from "./stroke";
+import { getTrigramStrokeTime } from "./stroke-time";
 
 export type TrigramEntry = { trigram: string; count: number };
 
@@ -128,16 +130,46 @@ export function getPlacementCandidates(layout: Layout, kana: Kana): PlacementCan
 
 const punctuation = new Set(["、", "。"]);
 
+export type SearchLayoutOptions = {
+  trigrams?: TrigramEntry[];
+  kanaOrder?: string[];
+};
+
+/**
+ * 打鍵単位3-gramの、最後の1単位を入力するのにかかる時間を計算する
+ */
+function getTrigramTailTime(layout: Layout, trigram: TrigramEntry): number {
+  try {
+    const strokes = textToStrokes(layout, trigram.trigram);
+    let time = 0;
+    for (let i = 0; i < strokes.length - 2; i++) {
+      if (strokes[i].strokeUnitIndex < 2) {
+        // 1文字目と2文字目はスキップ
+        continue;
+      }
+      time += getTrigramStrokeTime([strokes[i], strokes[i + 1], strokes[i + 2]]);
+    }
+    return time * trigram.count;
+  } catch (e) {
+    if (e instanceof StrokeConversionError) {
+      // まだ打てない文字がある場合は無視する
+      return 0;
+    }
+    throw e;
+  }
+}
+
 /**
  * 貪欲法でレイアウトを構築する
  * - シフトキーは固定位置に配置済み
  * - 頻度上位26（句読点を除く）は単打に配置
  * - 評価関数は仮で固定（最初の候補を採用）
  */
-export function searchLayout(): Layout {
+export function searchLayout(options: SearchLayoutOptions = {}): Layout {
   const layout = createLayoutWithShiftKeys();
+  const trigrams = new Set(options.trigrams ?? loadTrigramDataset());
 
-  const kanaOrder = loadKanaByFrequency(); // shiftキーは除外済み
+  const kanaOrder = options.kanaOrder ?? loadKanaByFrequency(); // shiftキーは除外済み
   const top26 = kanaOrder.filter((k) => !punctuation.has(k)).slice(0, 26);
   const isTop26 = (kana: string) => top26.includes(kana);
 
@@ -150,16 +182,34 @@ export function searchLayout(): Layout {
       throw new Error(`${kana} を配置できる候補がありません`);
     }
 
-    const chosen = candidates[0];
-    layout[chosen.position][chosen.slot] = kana as Kana;
+    let best_cost = Infinity;
+    let best_candidate = candidates[0];
+    const relatedTrigrams = Array.from(trigrams).filter((t) => t.trigram.includes(kana));
+    for (const candidate of candidates) {
+      // 新しく打てるようになった3-gramの打鍵時間を足し合わせる
+      let cost = 0;
+      const newLayout: Layout = {
+        ...layout,
+        [candidate.position]: { ...layout[candidate.position], [candidate.slot]: kana as Kana },
+      };
+      for (const trigram of relatedTrigrams) {
+        cost += getTrigramTailTime(newLayout, trigram);
+      }
+      if (cost < best_cost) {
+        best_cost = cost;
+        best_candidate = candidate;
+      }
+    }
+
+    layout[best_candidate.position][best_candidate.slot] = kana as Kana;
+    // 打てるようになった3-gramを削除する
+    for (const trigram of trigrams) {
+      if (!trigram.trigram.includes(kana)) continue;
+      if (getTrigramTailTime(layout, trigram) > 0) {
+        trigrams.delete(trigram);
+      }
+    }
   }
 
-  // 評価は「3-gramの最後の1単位（きゃふぁなどは1つと数える）を打つのにかかる時間の合計」とする
-  // 3-gramの全ての文字が打てるようになった時に、その分を加算する
-
-  // - [ ] 配置途中のレイアウトで、あるtrigramを打てるかどうかを判定する関数を作る
-  // - [ ] あるレイアウトで、trigramの3文字目を打つときにかかるコストを計算する関数を作る
-
-  // 余ったかな（頻度ファイルに無い場合）も考えるならここで対応するが、現状は頻度リストに含まれるもののみ
   return validateLayout(layout);
 }

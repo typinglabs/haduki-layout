@@ -283,16 +283,20 @@ for (let i = 0; i < SIZE; i++) {
   }
 }
 
+export function getTrigramStrokeTime(strokes: [Keystroke, Keystroke, Keystroke]): number {
+  const a = toIndex(strokes[0].key);
+  const b = toIndex(strokes[1].key);
+  const c = toIndex(strokes[2].key);
+  return trigramStrokeTime[a][b][c];
+}
+
 /**
  * 3-gramの打鍵時間を使って、打鍵時間を計算する
  */
-export function getStrokeTypeByTrigram(strokes: Keystroke[]): number {
+export function getStrokeTimeByTrigram(strokes: Keystroke[]): number {
   let strokeTime = getStrokeTime(strokes.slice(0, 2));
   for (let i = 0; i < strokes.length - 2; i++) {
-    const a = toIndex(strokes[i].key);
-    const b = toIndex(strokes[i + 1].key);
-    const c = toIndex(strokes[i + 2].key);
-    strokeTime += trigramStrokeTime[a][b][c];
+    strokeTime += getTrigramStrokeTime([strokes[i], strokes[i + 1], strokes[i + 2]]);
   }
 
   return strokeTime;

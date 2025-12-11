@@ -229,6 +229,8 @@ const isGairaionSuffix = (kana: string) => ["ぁ", "ぃ", "ぅ", "ぇ", "ぉ"].i
 
 const isDakuon = (kana: string): boolean => dakutenInverse[kana] !== undefined;
 
+export class StrokeConversionError extends Error {}
+
 /**
  * 打鍵単位を打つためのストロークを計算する
  */
@@ -269,7 +271,7 @@ export function strokesForKana(layout: Layout, kana: string): Keystroke[] {
     }
   }
 
-  throw new Error(`${kana} を入力する方法が見つかりません`);
+  throw new StrokeConversionError(`${kana} を入力する方法が見つかりません`);
 }
 
 export function keystrokeCountForKana(layout: Layout, kana: string): number {
@@ -293,21 +295,27 @@ export function totalKeystrokesForDataset(layout: Layout, dataset: KanaCount[]):
   return dataset.reduce((sum, { kana, count }) => sum + keystrokeCountForKana(layout, kana) * count, 0);
 }
 
+type KeystrokeWithIndex = Keystroke & { strokeUnitIndex: number };
+
 /**
  * ひらがなテキストをストローク列に変換する
  *
  * 2文字組（拗音・外来音など）は優先的に解釈し、失敗した場合は1文字ずつ解釈する。
  * 未対応の文字はスキップし、警告を出力する。
  */
-export function textToStrokes(layout: Layout, text: string): Keystroke[] {
-  const strokes: Keystroke[] = [];
+export function textToStrokes(layout: Layout, text: string): KeystrokeWithIndex[] {
+  const strokes: KeystrokeWithIndex[] = [];
   const normalized = text.replace(/\s+/g, "");
 
-  for (let i = 0; i < normalized.length; i++) {
+  const addIndex = (stroke: Omit<Keystroke, "strokeUnitIndex">, strokeUnitIndex: number): KeystrokeWithIndex => ({
+    ...stroke,
+    strokeUnitIndex,
+  });
+  for (let i = 0, strokeUnitIndex = 0; i < normalized.length; i++, strokeUnitIndex++) {
     const twoChars = normalized.slice(i, i + 2);
     if (twoChars.length === 2) {
       try {
-        strokes.push(...strokesForKana(layout, twoChars));
+        strokes.push(...strokesForKana(layout, twoChars).map((stroke) => addIndex(stroke, strokeUnitIndex)));
         i += 1;
         continue;
       } catch {
@@ -317,9 +325,9 @@ export function textToStrokes(layout: Layout, text: string): Keystroke[] {
 
     const oneChar = normalized[i];
     try {
-      strokes.push(...strokesForKana(layout, oneChar));
+      strokes.push(...strokesForKana(layout, oneChar).map((stroke) => addIndex(stroke, strokeUnitIndex)));
     } catch {
-      console.warn(`未対応の文字をスキップ: ${oneChar}`);
+      // console.warn(`未対応の文字をスキップ: ${oneChar}`);
     }
   }
 

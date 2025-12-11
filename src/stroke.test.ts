@@ -213,18 +213,18 @@ describe("textToStrokes", () => {
   test("1文字の列をストロークに変換できること", () => {
     const strokes = textToStrokes(exampleLayout, "きのこ");
     expect(strokes).toEqual([
-      { key: "p", shiftKey: false },
-      { key: "n", shiftKey: false },
-      { key: "o", shiftKey: false },
+      { key: "p", shiftKey: false, strokeUnitIndex: 0 },
+      { key: "n", shiftKey: false, strokeUnitIndex: 1 },
+      { key: "o", shiftKey: false, strokeUnitIndex: 2 },
     ]);
   });
 
   test("拗音を2文字として解釈すること", () => {
     const strokes = textToStrokes(exampleLayout, "きゃく");
     expect(strokes).toEqual([
-      { key: "p", shiftKey: false },
-      { key: "s", shiftKey: false },
-      { key: "h", shiftKey: false },
+      { key: "p", shiftKey: false, strokeUnitIndex: 0 },
+      { key: "s", shiftKey: false, strokeUnitIndex: 0 },
+      { key: "h", shiftKey: false, strokeUnitIndex: 1 },
     ]);
   });
 

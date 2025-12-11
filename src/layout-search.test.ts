@@ -94,7 +94,24 @@ describe("getPlacementCandidatesWithSlots", () => {
 
 describe("searchLayout", () => {
   test("貪欲法で配置したレイアウトがvalidateLayoutを通過すること", () => {
-    const layout = searchLayout();
+    const layout = searchLayout({ trigrams: [], kanaOrder: ["あ", "い", "う", "え", "お"] });
     expect(() => validateLayout(layout)).not.toThrow();
+  });
+
+  test("同じかなが複数のスロットに配置されないこと", () => {
+    const layout = searchLayout({ trigrams: [], kanaOrder: ["あ", "い", "う", "え", "お", "か", "き"] });
+    const counts = new Map<string, number>();
+
+    for (const info of Object.values(layout)) {
+      for (const slot of ["oneStroke", "shift1", "shift2", "normalShift"] as const) {
+        const kana = info[slot];
+        if (!kana) continue;
+        counts.set(kana, (counts.get(kana) ?? 0) + 1);
+      }
+    }
+
+    for (const [, count] of counts.entries()) {
+      expect(count).toBe(1);
+    }
   });
 });
