@@ -96,6 +96,26 @@ export type SearchLayoutOptions = {
   kanaOrder?: string[];
 };
 
+function reorderKanaOrder(baseOrder: string[]): string[] {
+  const youonOrDaku: string[] = [];
+  const gairaion: string[] = [];
+  const others: string[] = [];
+
+  for (const kana of baseOrder) {
+    const info = Kanas[kana as keyof typeof Kanas];
+    if (!info || info.type !== "normal") continue;
+    if (info.isYouon || info.isDakuon) {
+      youonOrDaku.push(kana);
+    } else if (info.isGairaion) {
+      gairaion.push(kana);
+    } else {
+      others.push(kana);
+    }
+  }
+
+  return [...youonOrDaku, ...gairaion, ...others];
+}
+
 export type LayoutScore = {
   score: number;
   totalCount: number;
@@ -301,10 +321,12 @@ function beamSearchLayout({
   kanaOrder,
   trigrams,
   beamWidth,
+  isOneStroke,
 }: {
   kanaOrder: string[];
   trigrams: TrigramEntry[];
   beamWidth: number;
+  isOneStroke: (kana: string) => boolean;
 }): Layout {
   const trigramsMap = makeTrigramsMap(trigrams, kanaOrder);
   console.log("trigram map created");
@@ -314,12 +336,16 @@ function beamSearchLayout({
 
   for (let i = 0; i < kanaOrder.length; i++) {
     const kana: Kana = kanaOrder[i] as Kana;
+    console.log({ i, kana });
 
     const nextBeam: State[] = [];
     for (let j = 0; j < Math.min(beamWidth, beam.length); j++) {
       const state = beam[j];
 
-      const places = getValidPlaces(state.layout, kana);
+      const places = getValidPlaces(state.layout, kana)
+        .filter((p) => (isOneStroke(kana) ? p.slot === "oneStroke" : true))
+        .filter((p) => (!isOneStroke(kana) ? p.slot !== "oneStroke" : true));
+
       for (const place of places) {
         const newLayout = placeKana(state.layout, place, kana);
         const nextState: State = {
@@ -331,6 +357,10 @@ function beamSearchLayout({
         nextBeam.push(nextState);
       }
     }
+    if (nextBeam.length === 0) {
+      console.log({ i, kana: kanaOrder[i], slice: kanaOrder.slice(i) });
+      break;
+    }
     nextBeam.sort((state1, state2) => state1.score - state2.score);
     beam = nextBeam.slice(0, beamWidth);
   }
@@ -339,13 +369,14 @@ function beamSearchLayout({
 
 export function searchLayout(options: SearchLayoutOptions = {}): Layout {
   const trigrams = options.trigrams ?? loadTrigramDataset();
-  const kanaOrder = options.kanaOrder ?? loadKanaByFrequency();
-  // const layout = greedySearch({ kanaOrder: [...kanaOrder], trigrams });
-  const layout = beamSearchLayout({ kanaOrder, trigrams, beamWidth: 100 });
+  const baseOrder = options.kanaOrder ?? loadKanaByFrequency();
+  const kanaOrder = reorderKanaOrder(baseOrder);
+
+  // TOP26を単打に配置することにする
+  const top26 = baseOrder.filter((k) => !punctuation.has(k)).slice(0, 26);
+  const isOneStroke = (kana: string) => top26.includes(kana);
+
+  const layout = beamSearchLayout({ kanaOrder, trigrams, beamWidth: 500, isOneStroke });
 
   return validateLayout(layout);
 }
-
-// 深さ: 50くらい
-// 遷移: 最大で120、もっと少ない
-// 幅: 100はいけるか、1000くらいでもいけるかも
