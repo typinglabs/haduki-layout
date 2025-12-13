@@ -1,4 +1,4 @@
-import { Kanas, Layout, KeyAssignment } from "./core";
+import { Layout, KeyAssignment, kogakiInverse, dakutenInverse } from "./core";
 import assert from "node:assert/strict";
 
 export type Keystroke = { key: string; shiftKey: boolean };
@@ -67,43 +67,6 @@ const shiftedKeyMap: Record<string, string> = {
   ",": "<",
   ".": ">",
   "/": "?",
-};
-
-const dakutenInverse: Record<string, string> = {
-  が: "か",
-  ぎ: "き",
-  ぐ: "く",
-  げ: "け",
-  ご: "こ",
-  ざ: "さ",
-  じ: "し",
-  ず: "す",
-  ぜ: "せ",
-  ぞ: "そ",
-  だ: "た",
-  ぢ: "ち",
-  づ: "つ",
-  で: "て",
-  ど: "と",
-  ば: "は",
-  び: "ひ",
-  ぶ: "ふ",
-  べ: "へ",
-  ぼ: "ほ",
-  ぱ: "は",
-  ぴ: "ひ",
-  ぷ: "ふ",
-  ぺ: "へ",
-  ぽ: "ほ",
-  ゔ: "う",
-};
-
-const kogakiInverse: Record<string, string> = {
-  ぁ: "あ",
-  ぃ: "い",
-  ぅ: "う",
-  ぇ: "え",
-  ぉ: "お",
 };
 
 export const keyForPosition = (position: string) => {

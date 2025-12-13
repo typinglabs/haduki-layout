@@ -10,6 +10,10 @@ import {
   validateKeyAssignment,
   LayoutValidationError,
   KeySlot,
+  dakutenInverse,
+  kogakiInverse,
+  kogakiKanas,
+  dakuonKanas,
 } from "./core";
 import { objectFromEntries } from "./utils";
 import { StrokeConversionError, textToStrokes } from "./stroke";
@@ -232,21 +236,62 @@ type State = { layout: Layout; depth: number; score: Score };
 
 /**
  * 盤面を評価する
+ *
+ * その手順で配置するかなを配置したときに打てるようになる、3-gramのコストの総和
  */
-function evaluateScore(state: State): void {}
+function evaluateScore(state: State, trigrams: TrigramEntry[]): void {
+  const score = trigrams
+    .map((trigram) => getTrigramTailTime(state.layout, trigram.trigram))
+    .reduce((sum, time) => sum + time, 0);
+  state.score = score;
+}
 
 /**
  * かなを置ける場所を取得する
  */
 function getValidPlaces(layout: Layout, kana: Kana): Place[] {
-  return [];
+  return getPlacementCandidates(layout, kana);
 }
 
 /**
  * 指定した場所にかなを配置する
  */
 function placeKana(layout: Layout, place: Place, kana: Kana): Layout {
-  return layout;
+  return {
+    ...layout,
+    [place.position]: { ...layout[place.position], [place.slot]: kana },
+  };
+}
+
+/**
+ * 3-gramを何番目のかなを配置できたら打てるようになるかを計算する
+ */
+export function getTrigramOrder(trigram: string, kanaOrder: string[]): number {
+  let maxOrder = 0;
+  for (const char of trigram) {
+    if (["ゃ", "ゅ", "ょ"].includes(char)) continue;
+    let kana: Kana = char as Kana;
+    if (dakuonKanas.includes(kana)) kana = dakutenInverse[kana];
+    if (kogakiKanas.includes(kana)) kana = kogakiInverse[kana];
+
+    // TODO: 計算量
+    const index = kanaOrder.findIndex((k) => k === kana);
+    maxOrder = Math.max(maxOrder, index);
+  }
+  return maxOrder;
+}
+
+export function makeTrigramsMap(trigrams: TrigramEntry[], kanaOrder: string[]): Record<number, TrigramEntry[]> {
+  const map: Record<number, TrigramEntry[]> = {};
+  for (const trigram of trigrams) {
+    const order = getTrigramOrder(trigram.trigram, kanaOrder);
+    if (!map[order]) {
+      map[order] = [trigram];
+    } else {
+      if (map[order].length < 5) map[order].push(trigram);
+    }
+  }
+  return map;
 }
 
 /**
@@ -260,9 +305,11 @@ function beamSearchLayout({
   kanaOrder: string[];
   trigrams: TrigramEntry[];
   beamWidth: number;
-}): void {
-  const layout = createLayoutWithShiftKeys();
-  const state: State = { layout, depth: 0, score: 0 };
+}): Layout {
+  const trigramsMap = makeTrigramsMap(trigrams, kanaOrder);
+  console.log("trigram map created");
+  const initialLayout = createLayoutWithShiftKeys();
+  const state: State = { layout: initialLayout, depth: 0, score: 0 };
   let beam: State[] = [state];
 
   for (let i = 0; i < kanaOrder.length; i++) {
@@ -272,7 +319,7 @@ function beamSearchLayout({
     for (let j = 0; j < Math.min(beamWidth, beam.length); j++) {
       const state = beam[j];
 
-      const places = getValidPlaces(layout, kana);
+      const places = getValidPlaces(state.layout, kana);
       for (const place of places) {
         const newLayout = placeKana(state.layout, place, kana);
         const nextState: State = {
@@ -280,20 +327,25 @@ function beamSearchLayout({
           depth: state.depth + 1,
           score: 0,
         };
-        evaluateScore(nextState);
+        evaluateScore(nextState, trigramsMap[i] ?? []);
         nextBeam.push(nextState);
       }
-
-      nextBeam.sort((state1, state2) => state1.score - state2.score);
-      beam = nextBeam.slice(0, beamWidth);
     }
+    nextBeam.sort((state1, state2) => state1.score - state2.score);
+    beam = nextBeam.slice(0, beamWidth);
   }
+  return beam[0].layout;
 }
 
 export function searchLayout(options: SearchLayoutOptions = {}): Layout {
-  const trigrams = options.trigrams ?? loadTrigramDataset().slice(0, 3000);
-  const kanaOrder = options.kanaOrder ?? loadKanaByFrequency(); // shiftキーは除外済み
-  const layout = greedySearch({ kanaOrder, trigrams });
+  const trigrams = options.trigrams ?? loadTrigramDataset();
+  const kanaOrder = options.kanaOrder ?? loadKanaByFrequency();
+  // const layout = greedySearch({ kanaOrder: [...kanaOrder], trigrams });
+  const layout = beamSearchLayout({ kanaOrder, trigrams, beamWidth: 100 });
 
   return validateLayout(layout);
 }
+
+// 深さ: 50くらい
+// 遷移: 最大で120、もっと少ない
+// 幅: 100はいけるか、1000くらいでもいけるかも
