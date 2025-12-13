@@ -308,7 +308,7 @@ export function makeTrigramsMap(trigrams: TrigramEntry[], kanaOrder: string[]): 
     if (!map[order]) {
       map[order] = [trigram];
     } else {
-      if (map[order].length < 5) map[order].push(trigram);
+      map[order].push(trigram);
     }
   }
   return map;
@@ -373,9 +373,9 @@ function beamSearchLayout({
 }
 
 export function searchLayout(options: SearchLayoutOptions = {}): Layout {
-  const trigrams = options.trigrams ?? loadTrigramDataset();
+  const trigrams = options.trigrams ?? loadTrigramDataset().slice(0, 4000);
   const kanaOrder = options.kanaOrder ?? loadKanaByFrequency();
-  const layout = beamSearchLayout({ kanaOrder, trigrams, beamWidth: 500 });
+  const layout = beamSearchLayout({ kanaOrder, trigrams, beamWidth: 100 });
 
   return validateLayout(layout);
 }
