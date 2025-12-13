@@ -170,11 +170,9 @@ export function scoreLayout(layout: Layout, trigrams: TrigramEntry[]): LayoutSco
  * - 頻度上位26（句読点を除く）は単打に配置
  * - 評価関数は仮で固定（最初の候補を採用）
  */
-export function searchLayout(options: SearchLayoutOptions = {}): Layout {
+function greedySearch({ kanaOrder, trigrams: _trigrams }: { kanaOrder: string[]; trigrams: TrigramEntry[] }): Layout {
+  const trigrams = new Set(_trigrams);
   const layout = createLayoutWithShiftKeys();
-  const trigrams = new Set(options.trigrams ?? loadTrigramDataset().slice(0, 3000));
-
-  const kanaOrder = options.kanaOrder ?? loadKanaByFrequency(); // shiftキーは除外済み
   const top26 = kanaOrder.filter((k) => !punctuation.has(k)).slice(0, 26);
   const isTop26 = (kana: string) => top26.includes(kana);
 
@@ -203,6 +201,7 @@ export function searchLayout(options: SearchLayoutOptions = {}): Layout {
       let cost = 0;
       const newLayout: Layout = {
         ...layout,
+
         [candidate.position]: { ...layout[candidate.position], [candidate.slot]: kana as Kana },
       };
       for (const trigram of relatedTrigrams) {
@@ -223,6 +222,78 @@ export function searchLayout(options: SearchLayoutOptions = {}): Layout {
       }
     }
   }
+
+  return layout;
+}
+
+type Place = PlacementCandidate;
+type Score = number;
+type State = { layout: Layout; depth: number; score: Score };
+
+/**
+ * 盤面を評価する
+ */
+function evaluateScore(state: State): void {}
+
+/**
+ * かなを置ける場所を取得する
+ */
+function getValidPlaces(layout: Layout, kana: Kana): Place[] {
+  return [];
+}
+
+/**
+ * 指定した場所にかなを配置する
+ */
+function placeKana(layout: Layout, place: Place, kana: Kana): Layout {
+  return layout;
+}
+
+/**
+ * ビームサーチ
+ */
+function beamSearchLayout({
+  kanaOrder,
+  trigrams,
+  beamWidth,
+}: {
+  kanaOrder: string[];
+  trigrams: TrigramEntry[];
+  beamWidth: number;
+}): void {
+  const layout = createLayoutWithShiftKeys();
+  const state: State = { layout, depth: 0, score: 0 };
+  let beam: State[] = [state];
+
+  for (let i = 0; i < kanaOrder.length; i++) {
+    const kana: Kana = kanaOrder[i] as Kana;
+
+    const nextBeam: State[] = [];
+    for (let j = 0; j < Math.min(beamWidth, beam.length); j++) {
+      const state = beam[j];
+
+      const places = getValidPlaces(layout, kana);
+      for (const place of places) {
+        const newLayout = placeKana(state.layout, place, kana);
+        const nextState: State = {
+          layout: newLayout,
+          depth: state.depth + 1,
+          score: 0,
+        };
+        evaluateScore(nextState);
+        nextBeam.push(nextState);
+      }
+
+      nextBeam.sort((state1, state2) => state1.score - state2.score);
+      beam = nextBeam.slice(0, beamWidth);
+    }
+  }
+}
+
+export function searchLayout(options: SearchLayoutOptions = {}): Layout {
+  const trigrams = options.trigrams ?? loadTrigramDataset().slice(0, 3000);
+  const kanaOrder = options.kanaOrder ?? loadKanaByFrequency(); // shiftキーは除外済み
+  const layout = greedySearch({ kanaOrder, trigrams });
 
   return validateLayout(layout);
 }
