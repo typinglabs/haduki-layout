@@ -1,5 +1,5 @@
 import { readFileSync } from "node:fs";
-import { exampleLayout, layout20251211greedy, top26Kanas } from "./layout-fixtures";
+import { layout20251211greedy, layout20251213beamsearch as exampleLayout, top26Kanas } from "./layout-fixtures";
 import { keystrokeCountForKana, strokesForKana, KanaCount, textToStrokes, keystrokesToString } from "./stroke";
 import { generateLayout, printLayout } from "./generate-random";
 import { getStrokeTime, getStrokeTimeByTrigram } from "./stroke-time";
@@ -119,7 +119,7 @@ function runSearchLayout() {
   printLayout(layout);
   runScoreLayout(layout);
 
-  // console.log(JSON.stringify(layout, null, 2));
+  console.log(JSON.stringify(layout, null, 2));
 }
 
 async function main() {

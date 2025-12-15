@@ -34,8 +34,8 @@ function createEmptyLayout(): Layout {
 
 const fixedShiftKeyPositions: Record<string, KeyPosition> = {
   ゃ: 11, // s
-  ゅ: 12, // d
-  ょ: 17, // k
+  ゅ: 2, // e
+  ょ: 7, // i
   ゛: 18, // l
 };
 

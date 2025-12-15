@@ -179,7 +179,7 @@ export const layout20251211greedy: Layout = {
   },
 };
 
-export const layout20251213greedy = {
+export const layout20251213greedy: Layout = {
   "0": {
     oneStroke: "ん",
     normalShift: "ち",
@@ -293,5 +293,122 @@ export const layout20251213greedy = {
   },
   "29": {
     oneStroke: "は",
+  },
+};
+
+export const layout20251213beamsearch: Layout = {
+  "0": {
+    oneStroke: "こ",
+    normalShift: "み",
+  },
+  "1": {
+    oneStroke: "と",
+    shift1: "わ",
+    shift2: "ね",
+  },
+  "2": {
+    oneStroke: "の",
+    shift1: "ぬ",
+    shift2: "け",
+    normalShift: "、",
+  },
+  "3": {
+    oneStroke: "は",
+  },
+  "4": {
+    oneStroke: "す",
+  },
+  "5": {
+    oneStroke: "れ",
+    shift1: "へ",
+  },
+  "6": {
+    oneStroke: "つ",
+    shift1: "ゆ",
+  },
+  "7": {
+    oneStroke: "か",
+    shift1: "よ",
+  },
+  "8": {
+    oneStroke: "に",
+  },
+  "9": {
+    oneStroke: "り",
+  },
+  "10": {
+    oneStroke: "し",
+  },
+  "11": {
+    oneStroke: "ゃ",
+  },
+  "12": {
+    oneStroke: "ゅ",
+    normalShift: "。",
+  },
+  "13": {
+    oneStroke: "う",
+    shift2: "や",
+  },
+  "14": {
+    oneStroke: "な",
+    shift1: "ほ",
+  },
+  "15": {
+    oneStroke: "る",
+    normalShift: "ひ",
+  },
+  "16": {
+    oneStroke: "ん",
+    normalShift: "ち",
+  },
+  "17": {
+    oneStroke: "ょ",
+  },
+  "18": {
+    oneStroke: "゛",
+  },
+  "19": {
+    oneStroke: "い",
+    shift2: "そ",
+  },
+  "20": {
+    oneStroke: "あ",
+    shift1: "を",
+  },
+  "21": {
+    oneStroke: "さ",
+    shift1: "ま",
+    shift2: "え",
+  },
+  "22": {
+    oneStroke: "き",
+  },
+  "23": {
+    oneStroke: "た",
+  },
+  "24": {
+    oneStroke: "ら",
+    shift1: "ふ",
+  },
+  "25": {
+    oneStroke: "く",
+    shift2: "め",
+  },
+  "26": {
+    oneStroke: "っ",
+    shift1: "む",
+    shift2: "お",
+  },
+  "27": {
+    oneStroke: "て",
+  },
+  "28": {
+    oneStroke: "せ",
+    shift2: "ろ",
+  },
+  "29": {
+    oneStroke: "ー",
+    shift2: "も",
   },
 };
