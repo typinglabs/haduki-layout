@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
-import { exampleLayout } from "../src/layout-fixtures";
-import { textToStrokes } from "../src/stroke";
+import { exampleLayout } from "cli/layout-fixtures";
+import { textToStrokes } from "cli/stroke";
 
 type Entry = { count: number; text: string };
 

@@ -1,8 +1,15 @@
 {
+  "name": "haduki-layout",
+  "version": "1.0.0",
   "scripts": {
     "cli": "bun run src/cli.ts",
     "serve:layout": "bun run scripts/serve-layout.ts"
   },
+  "workspaces": [
+    "packages/cli",
+    "packages/scripts",
+    "packages/web"
+  ],
   "dependencies": {},
   "devDependencies": {
     "bun-types": "^1.3.3"

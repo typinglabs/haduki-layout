@@ -1,5 +1,5 @@
-import { keyPositions } from "../../src/core";
-import { layout20251216adcale } from "../../src/layout-fixtures";
+import { keyPositions } from "cli/core";
+import { layout20251216adcale } from "cli/layout-fixtures";
 
 type KeyInfo = {
   position: number;
