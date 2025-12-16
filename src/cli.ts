@@ -1,11 +1,5 @@
 import { readFileSync } from "node:fs";
-import {
-  layout20251211greedy,
-  layout20251213beamsearch as exampleLayout,
-  top26Kanas,
-  layout20251216adcale,
-  layout20251216middleRow,
-} from "./layout-fixtures";
+import { layout20251213beamsearch as exampleLayout, top26Kanas, layout20251216adcale } from "./layout-fixtures";
 import { keystrokeCountForKana, strokesForKana, KanaCount, textToStrokes, keystrokesToString } from "./stroke";
 import { generateLayout, printLayout } from "./generate-random";
 import { getStrokeTime, getStrokeTimeByTrigram } from "./stroke-time";
@@ -157,7 +151,7 @@ async function main() {
       break;
     }
     case "score": {
-      runScoreLayout(layout20251216middleRow);
+      runScoreLayout(layout20251216adcale);
       break;
     }
     default:

@@ -80,11 +80,16 @@ export function getPlacementCandidates(layout: Layout, kana: Kana): PlacementCan
 
   const isMiddleRow = (position: KeyPosition) => position >= 10 && position < 20;
   const isHaRowKana = (k: Kana) => ["は", "ひ", "ふ", "へ", "ほ"].includes(k);
+  const isVowelKana = (k: Kana) => ["あ", "い", "う", "え", "お"].includes(k);
+  const forbiddenVowelPositions = new Set<KeyPosition>([0, 1, 2, 3, 4, 14, 24]);
 
   const candidates: PlacementCandidate[] = [];
   for (const position of keyPositions) {
-    // 拗音になるかなは中段には置かない
-    if ((kanaInfo.isYouon || isHaRowKana(kana)) && isMiddleRow(position)) continue;
+    // 拗音になるかなとは行かなはは中段には置かない
+    // if ((kanaInfo.isYouon || isHaRowKana(kana)) && isMiddleRow(position)) continue;
+    if (kanaInfo.isYouon && isMiddleRow(position)) continue;
+    // 母音は左手上段(QWERT)と左手5列目(T/G/B)に置かない
+    if (isVowelKana(kana) && forbiddenVowelPositions.has(position)) continue;
 
     for (const slot of keySlots) {
       if (canAssignKana(layout, position, slot, kana)) {

@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "serve:layout": "bun run scripts/serve-layout.ts"
+  },
   "dependencies": {},
   "devDependencies": {
     "bun-types": "^1.3.3"
