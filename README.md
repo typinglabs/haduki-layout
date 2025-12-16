@@ -4,7 +4,7 @@
 
 ## 配列図
 
-![20251216アドカレ版配列図](./images/2025-12-16-layout.png)
+![20251216アドカレ版配列図](./docs/images/2025-12-16-layout.png)
 
 ## 設計思想
 
@@ -17,7 +17,7 @@
 
 Google日本語入力のローマ字テーブルで実装しています。
 
-[葉月配列 20251216アドカレ版](./implementation/haduki-2025-12-16-adcale.tsv)
+[葉月配列 20251216アドカレ版](./data/implementation/haduki-2025-12-16-adcale.tsv)
 
 ## 入力方法
 
