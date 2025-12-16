@@ -81,7 +81,7 @@ export default function App() {
   return (
     <main className="max-w-6xl mx-auto px-5 pb-12 pt-7 text-slate-900">
       <header className="mb-5">
-        <h1 className="text-2xl font-bold mb-1">配列図 20251216アドカレ版</h1>
+        <h1 className="text-2xl font-bold mb-1">20251216アドカレ版</h1>
       </header>
 
       <div className="flex flex-wrap gap-5 mb-4">
