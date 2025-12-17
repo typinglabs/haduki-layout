@@ -1,5 +1,5 @@
 {
-  "name": "haduki-layout-web",
+  "name": "web",
   "private": true,
   "version": "0.0.1",
   "type": "module",
@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "cli": "workspace:*",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },

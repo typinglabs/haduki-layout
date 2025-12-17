@@ -22,7 +22,11 @@ export function printLayout(layout: Layout) {
   const props = ["oneStroke", "shift1", "shift2", "normalShift"] as const;
   const hasYouonBase = (pos: KeyPosition) => {
     const assignment = layout[pos];
-    return Object.values(assignment).some((kana) => kana && Kanas[kana as keyof typeof Kanas]?.isYouon);
+    return Object.values(assignment).some((kana) => {
+      if (!kana) return false;
+      const info = Kanas[kana as keyof typeof Kanas];
+      return info?.type === "normal" && info.isYouon;
+    });
   };
   for (const prop of props) {
     let line = "";

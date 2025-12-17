@@ -1,12 +1,8 @@
 {
-  "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
-    "lib": ["ESNext"],
-    "types": ["bun-types"],
-    "strict": true,
-    "noEmit": true
-  },
-  "include": ["src"]
+  "files": [],
+  "references": [
+    { "path": "./packages/cli/tsconfig.json" },
+    { "path": "./packages/scripts/tsconfig.json" },
+    { "path": "./packages/web/tsconfig.json" }
+  ]
 }
