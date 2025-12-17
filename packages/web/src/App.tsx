@@ -1,27 +1,34 @@
-import { keyPositions } from "cli/core";
+import { KeyPosition, keyPositions } from "cli/core";
 import { layout20251216adcale } from "cli/layout-fixtures";
 
 type KeyInfo = {
-  position: number;
+  position: KeyPosition;
   row: number;
   col: number;
   label: string;
+  vowel: string | undefined;
 };
 
 const rowOffsets = [0, 0.25, 0.75]; // middle row is +0.25, bottom is +0.5 from middle
 const keyWidth = 72;
 const keyHeight = 72;
 
+const layout = layout20251216adcale;
+const vowels = ["あ", "い", "う", "え", "お"];
+
 function buildKeys(slot: "oneStroke" | "shift1" | "shift2" | "normalShift"): KeyInfo[] {
   return keyPositions.map((position) => {
     const row = Math.floor(position / 10);
     const col = position % 10;
-    const label = layout20251216adcale[position][slot] ?? "";
+    const label = layout[position][slot] ?? "";
+    const vowel = Object.values(layout[position]).find((kana) => vowels.includes(kana));
+
     return {
       position,
       row,
       col: col + rowOffsets[row],
       label,
+      vowel: vowel,
     };
   });
 }
@@ -37,6 +44,17 @@ type BoardProps = {
   slot: "oneStroke" | "shift1" | "shift2" | "normalShift";
 };
 
+function kogaki(vowel: string): string | undefined {
+  const kogakiMap: Record<string, string> = {
+    あ: "ぁ",
+    い: "ぃ",
+    う: "ぅ",
+    え: "ぇ",
+    お: "ぉ",
+  };
+  return kogakiMap[vowel];
+}
+
 function KeyboardBoard({ title, slot }: BoardProps) {
   const keys = buildKeys(slot);
   const width = (10 + Math.max(...rowOffsets)) * keyWidth;
@@ -48,7 +66,17 @@ function KeyboardBoard({ title, slot }: BoardProps) {
       <div className="text-base font-semibold text-slate-700 mb-1">{title}</div>
       <div className="absolute">
         {keys.map((key) => {
-          const text = normalizeLabel(key.label);
+          let text = normalizeLabel(key.label);
+          if (key.vowel && slot === "normalShift") {
+            text = kogaki(key.vowel) ?? "";
+          }
+          if (layout[key.position].oneStroke === "は" && slot === "shift1") {
+            text = "ぴ";
+          }
+          if (layout[key.position].shift1 === "ふ" && slot === "normalShift") {
+            text = "ふ";
+          }
+
           const wide = text.length >= 2;
           return (
             <div
